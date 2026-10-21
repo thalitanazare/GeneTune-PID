@@ -10,6 +10,9 @@ Laboratory interface for teaching PID tuning and genetic algorithms on the ball-
 Double-click `GeneTune.bat` (needs Python; opens http://localhost:8765 in the default browser). Use Chrome or Edge for the live mode.
 Opening `index.html` directly also works for the five replay stages.
 
+## Video walkthrough
+Watch this 8-minute overview to see how GeneTune-PID works, from the theory and replay stages to a live experiment on the ball-in-tube rig.
+
 https://github.com/user-attachments/assets/05cee45d-911c-420d-9b53-3368ac2b40cc
 
 ## Replay stages (1-5)
