@@ -1,0 +1,1209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GeneTune-PID</title>
+<style>
+:root{--bg:#e9edf2;--panel:#fff;--ink:#141a24;--ink2:#3f4857;--muted:#687183;--line:#cfd5de;--accent:#1c5591;--accent2:#c25a12;--bad:#a8281b;--good:#21744a;--grid:#e1e6ec}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 "Segoe UI",system-ui,-apple-system,sans-serif}
+header{display:flex;align-items:center;gap:16px;padding:10px 20px;background:var(--panel);border-bottom:1px solid var(--line)}
+header h1{font-size:27px;margin:0;font-weight:750;letter-spacing:-.2px;display:flex;align-items:center;gap:10px;line-height:1}header{padding:8px 20px}
+header .sub{color:var(--ink2);font-size:13px}
+header .mode{margin-left:auto;font-size:12px;color:var(--ink2);border:1px solid var(--line);border-radius:12px;padding:3px 10px}
+.wrap{display:grid;grid-template-columns:230px 1fr;min-height:calc(100vh - 50px)}
+nav{background:var(--panel);border-right:1px solid var(--line);padding:14px 10px}
+nav button{display:block;width:100%;text-align:left;border:0;background:none;padding:9px 10px;border-radius:8px;cursor:pointer;color:var(--ink);font:inherit;margin-bottom:4px}
+nav button .n{display:inline-block;width:22px;height:22px;border-radius:11px;background:var(--grid);text-align:center;line-height:22px;font-size:12px;margin-right:8px;color:var(--ink2)}
+nav button .lo{display:block;font-size:11.5px;color:var(--muted);margin-left:30px}
+nav button.on{background:#d9e5f3}
+nav button.on .n{background:var(--accent);color:#fff}
+nav .foot{margin-top:18px;padding:10px;font-size:11.5px;color:var(--ink2);border-top:1px solid var(--line)}
+main{padding:16px 20px}
+.stage{display:none}.stage.on{display:block}
+.title{display:flex;align-items:baseline;gap:12px;margin-bottom:10px}
+.title h2{margin:0;font-size:17px}
+.title .bloom{font-size:12px;color:var(--accent);border:1px solid var(--accent);border-radius:10px;padding:1px 8px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1.35fr 1fr}.g21{grid-template-columns:2fr 1fr}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.card h3{margin:0 0 8px;font-size:13.5px;font-weight:620}
+.card .hint{font-size:12px;color:var(--ink2)}
+svg.plot{width:100%;height:auto;display:block}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0}
+label{font-size:12.5px;color:var(--ink2)}
+input[type=number]{width:74px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;font:inherit}
+input[type=range]{width:120px}
+select,button.b{font:inherit;padding:5px 10px;border-radius:6px;border:1px solid var(--line);background:#fff;cursor:pointer}
+button.b.p{background:var(--accent);color:#fff;border-color:var(--accent)}
+.kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.kpi div{background:var(--bg);border-radius:8px;padding:7px 9px}
+.kpi b{display:block;font-size:17px;font-weight:620}
+.kpi span{font-size:11.5px;color:var(--ink2)}
+table.t{border-collapse:collapse;width:100%;font-size:12.5px;font-variant-numeric:tabular-nums}
+table.t th,table.t td{border-bottom:1px solid var(--line);padding:4px 6px;text-align:right}
+table.t th:first-child,table.t td:first-child{text-align:left}
+table.t tr.sel td{background:#d9e5f3}
+table.t tr.win td{font-weight:620}
+.mono{font-family:Consolas,"Cascadia Mono",monospace;font-size:12.5px}
+.calc{background:var(--bg);border-radius:8px;padding:9px 11px;font-family:Consolas,monospace;font-size:12.5px;white-space:pre-wrap;line-height:1.55}
+.fb{font-size:12.5px;margin-left:6px}.fb.ok{color:var(--good)}.fb.no{color:var(--bad)}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--ink2);flex-wrap:wrap}
+.legend i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:5px;border-radius:2px}
+.bar{height:10px;background:var(--grid);border-radius:5px;overflow:hidden}.bar>div{height:100%;background:var(--accent)}
+.tag{display:inline-block;font-size:11.5px;padding:1px 7px;border-radius:9px;background:var(--grid);color:var(--ink2)}
+.tag.bad{background:#f6dcd8;color:var(--bad)}.tag.good{background:#d6ecdf;color:var(--good)}
+.learning{margin-top:14px}.learning .summary{background:#f1f5fa;border-left:3px solid var(--accent);padding:10px 14px}.learning .summary p{margin:5px 0}.learning fieldset{border:1px solid var(--line);border-radius:7px;margin:10px 0;padding:10px}.learning legend{font-weight:620;padding:0 4px}.learning label{display:block;margin:5px 0}.learning textarea{width:100%;min-height:70px;padding:7px;border:1px solid var(--line);border-radius:6px;font:inherit}.learning .feedback{color:var(--ink2);font-size:12px;margin:5px 0}.learning .feedback.good{color:var(--good)}.learning .feedback.bad{color:var(--bad)}
+@media (max-width:900px){.wrap{grid-template-columns:1fr}.g2,.g3,.g21{grid-template-columns:1fr}nav{display:flex;overflow-x:auto}nav button{min-width:150px}}
+.reportonly .card:not(.focus){display:none}
+.title .bloom{border:0;background:none;color:var(--muted);padding:0;font-size:12px}
+.how{background:#f1f5fa;border-left:3px solid var(--accent);border-radius:6px;padding:9px 13px;margin:0 0 12px;font-size:13px}
+.how b.h{display:block;font-size:13px;margin-bottom:3px;color:var(--accent)}
+.how ol{margin:4px 0 0 18px;padding:0}.how li{margin:2px 0}
+.theory{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.theory .card p{margin:5px 0;font-size:13px}.theory .card ul{margin:4px 0 4px 18px;padding:0;font-size:13px}
+.cite{font-size:10px;margin-left:1px}.cite a{color:var(--accent);text-decoration:none}
+.reading{margin-top:14px}.reading h3{margin-bottom:6px}.reading h4{margin:10px 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.reading ul.topics{list-style:none;margin:0;padding:0;font-size:13px}.reading ul.topics li{padding:3px 0;border-bottom:1px solid var(--line)}.reading ul.topics .c{color:var(--accent);font-weight:600;margin-left:4px;white-space:nowrap}
+.reading ol.bib{margin:0 0 0 24px;padding:0;font-size:12.5px;color:var(--ink2)}.reading ol.bib li{margin:3px 0;padding-left:2px}
+.eq{font-family:Cambria,"Times New Roman",serif;font-size:14.5px;background:var(--bg);border-radius:6px;padding:6px 10px;margin:6px 0;text-align:center}
+table.map{border-collapse:collapse;width:100%;font-size:12.5px}table.map td,table.map th{border-bottom:1px solid var(--line);padding:5px 6px;text-align:left;vertical-align:top}
+.simrow{display:grid;grid-template-columns:150px 1fr;gap:12px;align-items:start}
+svg.plant{width:150px;height:auto;display:block}
+.readout{font-family:Consolas,monospace;font-size:12px;color:var(--ink2);min-height:16px}
+@media (max-width:900px){.theory{grid-template-columns:1fr}.simrow{grid-template-columns:110px 1fr}svg.plant{width:110px}}
+</style>
+</head>
+<body>
+<header>
+  <h1 class="logo" aria-label="GeneTune-PID"><svg width="44" height="44" viewBox="0 0 64 64" aria-hidden="true">  <rect x="1" y="1" width="62" height="62" rx="14" fill="#ffffff" stroke="#cfd5de" stroke-width="2"/>    <g fill="none" stroke-linecap="round">    <path d="M10 9 C 27 17, 27 25, 10 32 S 27 48, 10 55" stroke="#1c5591" stroke-width="3.6"/>    <path d="M27 9 C 10 17, 10 25, 27 32 S 10 48, 27 55" stroke="#1c5591" stroke-width="3.6" opacity=".45"/>    <path d="M13.5 14.5h10M13.5 49.5h10M14.5 25h8M14.5 39h8" stroke="#1c5591" stroke-width="2.2" opacity=".8"/>  </g>    <path d="M30 27 H58" stroke="#c25a12" stroke-width="1.8" stroke-dasharray="3 3" opacity=".55"/>  <path d="M30 50 H35 C 39 50, 39 14, 45 16 S 50 30, 53 27.5 S 56 26.5, 58 27" fill="none" stroke="#c25a12" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="wm"><span style="color:var(--accent)">Gene</span><span style="color:var(--accent2)">Tune</span><span style="color:#111">-PID</span></span></h1>
+  <span class="sub">PID tuning and genetic algorithms on an 8-bit microcontroller · ball-in-tube levitator</span>
+  <span class="mode" id="mode">Replay mode · measured data set (10 tunings, 430 trials)</span>
+</header>
+<div class="wrap">
+<nav id="nav"></nav>
+<main>
+
+<!-- ====================== STAGE 0 ====================== -->
+<section class="stage" id="s0">
+  <div class="title"><h2>Start here · What GeneTune-PID is and how to use it</h2></div>
+  <div class="how"><b class="h">What this platform does</b>
+    GeneTune-PID teaches how to tune a PID controller for a real plant, first with a classical rule (Ziegler–Nichols) and then with a genetic algorithm (GA) that runs <em>inside</em> an 8-bit microcontroller. All curves come from measured experiments on the rig, except the model simulations on this page and in Stage 2. Read this page once, try the simulator, then follow the stages in order.</div>
+  <div class="card"><h3>Try it: the ball-in-tube plant under PID control (model simulation)</h3>
+    <div class="simrow">
+      <svg class="plant" id="plt0" viewBox="0 0 160 330"></svg>
+      <div>
+        <svg class="plot" id="p0" viewBox="0 0 640 230"></svg>
+        <div class="legend"><span><i style="background:var(--accent)"></i>Distance h (cm, measured from the sensor at the top)</span><span><i style="background:var(--accent2)"></i>Fan command u / 10 (PWM)</span><span><i style="background:var(--muted)"></i>Setpoint r = 15 cm</span></div>
+        <div class="row">
+          <label>K<sub>p</sub> <b id="v0p"></b></label><input type="range" id="k0p" min="0" max="5.24" step="0.01" value="2.62">
+          <label>K<sub>i</sub> <b id="v0i"></b></label><input type="range" id="k0i" min="0" max="6.08" step="0.01" value="3.04">
+          <label>K<sub>d</sub> <b id="v0d"></b></label><input type="range" id="k0d" min="0" max="1.13" step="0.01" value="0.56">
+        </div>
+        <div class="row"><button class="b p" id="a0play">▶ Play step response</button><span class="readout" id="a0r"></span></div>
+        <p class="hint">The ball starts at the bottom of the tube (h ≈ 31 cm) and the controller must lift it to 15 cm. Move a slider and press Play: the drawing of the rig follows the curve in time. Try K<sub>i</sub> = 0 (the ball settles away from 15 cm) or a large K<sub>p</sub> (more overshoot).</p>
+      </div>
+    </div>
+  </div>
+  <div class="theory" style="margin-top:14px">
+    <div class="card"><h3>1 · The plant</h3>
+      <p>A fan at the bottom of a vertical tube blows air upwards and lifts a light ball. An ultrasonic sensor at the top measures the distance <b>h</b> from the sensor to the ball every T = 0.1 s. The Arduino sets the fan speed with a PWM command <b>u</b> between 0 and 255.</p>
+      <p>More airflow lifts the ball, so <b>h decreases when u increases</b>. The task is to hold the ball at the setpoint r = 15 cm.</p></div>
+    <div class="card"><h3>2 · The PID controller</h3>
+      <p>At every sample k the controller computes the error and three corrective terms, in the discrete parallel form:</p>
+      <div class="eq">e<sub>k</sub> = s (r − h<sub>k</sub>),   u<sub>k</sub> = K<sub>p</sub>e<sub>k</sub> + K<sub>i</sub>T Σ<sub>j≤k</sub> e<sub>j</sub> + K<sub>d</sub>(e<sub>k</sub> − e<sub>k−1</sub>)/T</div>
+      <ul><li><b>P</b> reacts to the present error: faster response, more overshoot.</li><li><b>I</b> accumulates past error: removes the steady offset.</li><li><b>D</b> reacts to the rate of change of the error: adds damping.</li></ul>
+      <p>Because h falls when u rises, the error sign is inverted: s = −1.</p></div>
+    <div class="card"><h3>3 · Measuring performance</h3>
+      <p>Each experiment is a 35-s trial: 5 s with the fan off, then a 30-s step to r = 15 cm. Its cost is the ITAE (integral of time-weighted absolute error), in cm·s²:</p>
+      <div class="eq">J = T² Σ<sub>k</sub> k |e<sub>k</sub>|</div>
+      <p>Each error is multiplied by its time, so slow settling is penalised more than the unavoidable initial error. Lower J is better. The platform also reports overshoot, settling time and the actuator variation TV = Σ|u<sub>k</sub> − u<sub>k−1</sub>|, which measures how hard the fan works.</p></div>
+    <div class="card"><h3>4 · Tuning with a genetic algorithm</h3>
+      <p>A GA searches for good gains (K<sub>p</sub>, K<sub>i</sub>, K<sub>d</sub>) by imitating natural evolution:</p>
+      <ul><li>a <b>population</b> of N<sub>p</sub> candidate gain sets is tested, one rig trial each;</li><li>the <b>fitness</b> of each candidate is its measured ITAE;</li><li>better candidates are <b>selected</b>, combined by <b>crossover</b> and slightly changed by <b>mutation</b>;</li><li>the best candidate (<b>elite</b>) is kept unchanged, and the cycle repeats for G <b>generations</b>.</li></ul>
+      <div class="eq">trials = N<sub>p</sub> + G(N<sub>p</sub> − 1) + 1</div>
+      <p>Each trial takes 35 s on the rig, so the number of trials, not computation, limits the search.</p></div>
+    <div class="card"><h3>5 · Noise and confirmation</h3>
+      <p>Repeating the same gains on the rig gives a different ITAE each time, because of sensor noise and turbulent airflow. When the GA keeps the <em>lowest</em> of many noisy measurements, that stored score tends to be lucky (optimistic). An independent <b>confirmation trial</b> of the winner gives a realistic cost. This optimistic bias of noisy fitness evaluation is a known problem in evolutionary optimisation.</p>
+      <p>To save time, a trial is <b>stopped early</b> once its running cost exceeds twice the best stored cost: the cost can only grow, so that trial can no longer become the best.</p></div>
+    <div class="card"><h3>6 · What you do in each stage</h3>
+      <table class="map"><tr><th>Stage</th><th>Task</th></tr>
+        <tr><td>1 Relay &amp; ZN</td><td>Measure the oscillation of a relay test and compute classical ZN gains.</td></tr>
+        <tr><td>2 Model-based GA</td><td>Try gains on a model and see what the cost function rewards.</td></tr>
+        <tr><td>3 GA on the chip</td><td>Follow one GA generation step by step and count trials and memory.</td></tr>
+        <tr><td>4 Evaluate trials</td><td>Replay real tunings: early stopping, and stored versus confirmed cost.</td></tr>
+        <tr><td>5 Retuning</td><td>Design the rule that decides when to tune again.</td></tr>
+        <tr><td>⚡ Live rig</td><td>Run new experiments on the Arduino, or on its emulator.</td></tr></table></div>
+  </div>
+  <div class="card reading"><h3>Further reading for this stage</h3>
+    <h4>Topics</h4><ul class="topics">
+      <li>PID control: structure and the role of P, I and D<span class="c">[1, 2]</span></li>
+      <li>Discrete-time PID implementation<span class="c">[3]</span></li>
+      <li>Performance indices (ITAE)<span class="c">[4]</span></li>
+      <li>Genetic algorithms: principles<span class="c">[5, 6]</span></li>
+      <li>Noisy fitness evaluation<span class="c">[7]</span></li>
+      <li>Learning levels (revised Bloom taxonomy)<span class="c">[8]</span></li>
+    </ul>
+    <h4>References</h4><ol class="bib">
+      <li>K. Ogata, <i>Modern Control Engineering</i>, 5th ed. Prentice Hall, 2010.</li>
+      <li>G. F. Franklin, J. D. Powell, and A. Emami-Naeini, <i>Feedback Control of Dynamic Systems</i>, 8th ed. Pearson, 2019.</li>
+      <li>K. J. Åström and B. Wittenmark, <i>Computer-Controlled Systems: Theory and Design</i>, 3rd ed. Prentice Hall, 1997.</li>
+      <li>R. C. Dorf and R. H. Bishop, <i>Modern Control Systems</i>, 13th ed. Pearson, 2017.</li>
+      <li>J. H. Holland, <i>Adaptation in Natural and Artificial Systems</i>. Univ. of Michigan Press, 1975.</li>
+      <li>D. E. Goldberg, <i>Genetic Algorithms in Search, Optimization, and Machine Learning</i>. Addison-Wesley, 1989.</li>
+      <li>A. E. Eiben and J. E. Smith, <i>Introduction to Evolutionary Computing</i>, 2nd ed. Springer, 2015.</li>
+      <li>L. W. Anderson and D. R. Krathwohl, Eds., <i>A Taxonomy for Learning, Teaching, and Assessing</i>. Longman, 2001.</li>
+    </ol></div>
+</section>
+
+<!-- ====================== STAGE 1 ====================== -->
+<section class="stage" id="s1">
+  <div class="title"><h2>Stage 1 · Relay test and Ziegler–Nichols tuning</h2><span class="bloom" title="Revised Bloom level of this stage's learning outcome (Anderson and Krathwohl, 2001)">Bloom level: Apply</span></div>
+  <div class="how"><b class="h">Goal: obtain a first set of PID gains from one experiment</b>
+    In the relay test the fan switches between two levels (an on–off controller), so the ball oscillates around 15 cm. The size and period of this oscillation describe the plant, and the Ziegler–Nichols (ZN) rule turns them into gains. The relay test, proposed by Åström and Hägglund, estimates the ultimate gain K<sub>u</sub> = 4d/(πa) by the describing-function approximation.
+    <ol><li>Look at the relay plot: the <b style="color:#21744a">green</b> arrow shows the peak-to-valley distance 2a, and the <b style="color:#7b3fa0">purple</b> arrow shows the period P<sub>u</sub>. Their values are in the two coloured boxes below the plot.</li>
+    <li>Enter a and P<sub>u</sub> in the boxes, compute K<sub>p</sub>, K<sub>i</sub> and K<sub>d</sub> with the formulas, enter your gains and press <b>Check</b>.</li>
+    <li>Then watch the measured response with the ZN gains at the bottom of the page.</li></ol></div>
+  <div class="grid g3">
+    <div class="card"><h3>Measured relay experiment: one oscillation cycle</h3>
+      <svg class="plot" id="p1relay" viewBox="0 0 560 250" style="cursor:crosshair"></svg><div class="row" style="gap:8px;margin-top:8px">
+        <div style="flex:1;min-width:200px;border:2px solid #21744a;border-radius:8px;padding:6px 10px"><b style="color:#21744a">Amplitude a</b> = half the distance from peak to valley<br><span style="font-size:18px;font-weight:700;color:#21744a">a = 11.66 cm</span></div>
+        <div style="flex:1;min-width:200px;border:2px solid #7b3fa0;border-radius:8px;padding:6px 10px"><b style="color:#7b3fa0">Period P<sub>u</sub></b> = time from one peak to the next<br><span style="font-size:18px;font-weight:700;color:#7b3fa0">P<sub>u</sub> = 1.72 s</span></div></div>
+      <p class="hint">The values in the boxes are the firmware's averages over all cycles of the test; a single cycle, as drawn, varies slightly. Hover over the curve to read t and h.</p>
+      <div class="readout" id="p1ro"></div><div class="row"><button class="b" id="z1">Show the full 40-s test</button></div>
+      <div class="legend" id="lg1" style="display:none"><span><i style="background:var(--accent)"></i>Distance h (cm)</span><span><i style="background:var(--accent2)"></i>Relay output u / 10</span></div>
+    </div>
+    <div class="card"><h3>From oscillation to gains</h3>
+      <p class="hint" style="margin-top:0">Relay amplitude d = 40 PWM (set by the firmware).</p>
+      <div class="row"><label>Your measured a (cm)</label><input id="a1" type="number" step="0.01"><label>Your measured P<sub>u</sub> (s)</label><input id="pu1" type="number" step="0.01"><input id="d1" type="hidden" value="40"></div>
+      <div class="calc" id="c1"></div>
+      <h3 style="margin-top:10px">Your gains</h3>
+      <div class="row"><label>K<sub>p</sub></label><input id="q1p" type="number" step="0.01"><label>K<sub>i</sub></label><input id="q1i" type="number" step="0.01"><label>K<sub>d</sub></label><input id="q1d" type="number" step="0.01"><button class="b p" id="q1b">Check</button><button class="b" id="q1s">Show worked solution</button></div>
+      <div id="q1f" class="fb" style="margin:4px 0 0"></div>
+      <p class="hint">Why is the error e = s(r − h) with s = −1? More airflow lifts the ball, so the measured distance h <em>decreases</em> when u increases.</p>
+    </div>
+  </div>
+  <div class="card" style="margin-top:14px"><h3>Measured closed-loop responses with the ZN gains (2.62, 3.04, 0.56), session A, five trials</h3>
+    <div class="simrow"><svg class="plant" id="plt1" viewBox="0 0 160 330"></svg>
+    <div><svg class="plot" id="p1zn" viewBox="0 0 760 260"></svg>
+    <div class="row"><button class="b p" id="a1play">▶ Play trial 1 on the rig drawing</button><span class="readout" id="a1r"></span></div>
+    <p class="hint">Faint lines are five repeated trials with the same gains; the dark one is replayed. Repeating the same gains does not give the same curve: this noise matters again in Stage 4.</p></div></div>
+  </div>
+  <div class="card reading"><h3>Further reading for this stage</h3>
+    <h4>Topics</h4><ul class="topics">
+      <li>Relay feedback test and automatic tuning<span class="c">[1]</span></li>
+      <li>Ziegler–Nichols tuning rules<span class="c">[1, 2]</span></li>
+      <li>Describing-function analysis (K<sub>u</sub> = 4d/πa)<span class="c">[3]</span></li>
+    </ul>
+    <h4>References</h4><ol class="bib">
+      <li>K. J. Åström and T. Hägglund, <i>PID Controllers: Theory, Design, and Tuning</i>, 2nd ed. ISA, 1995.</li>
+      <li>K. Ogata, <i>Modern Control Engineering</i>, 5th ed. Prentice Hall, 2010.</li>
+      <li>J.-J. E. Slotine and W. Li, <i>Applied Nonlinear Control</i>. Prentice Hall, 1991.</li>
+    </ol></div>
+</section>
+
+<!-- ====================== STAGE 2 ====================== -->
+<section class="stage" id="s2">
+  <div class="title"><h2>Stage 2 · Tuning as optimisation on an identified model</h2><span class="bloom" title="Revised Bloom level of this stage's learning outcome (Anderson and Krathwohl, 2001)">Bloom level: Understand</span></div>
+  <div class="how"><b class="h">Goal: see what each PID term does and what the ITAE cost rewards</b>
+    A GA does not "know" control: it only compares the cost of each gain set. Here you play the GA's role on a computer model of the rig, so every change is evaluated instantly instead of with a 35-s rig trial.
+    <ol><li>Run the five guided experiments below in order. Each one sets the gains and tells you what to look for in the curve and in the numbers.</li>
+    <li>Then move the sliders freely and try to beat ZN: the green or red box on the right compares your ITAE with ZN.</li></ol></div>
+  <div class="card" style="margin-bottom:14px"><h3>Guided experiments</h3>
+    <div class="row" id="x2btns"></div>
+    <div class="how" id="x2txt" style="margin:6px 0 0;background:#fff8ef;border-left-color:var(--accent2)"></div>
+  </div>
+  <div class="grid g3">
+    <div class="card"><h3>Simulated response (solid) and ZN reference (dashed)</h3>
+      <div class="simrow"><svg class="plant" id="plt2" viewBox="0 0 160 330"></svg><svg class="plot" id="p2sim" viewBox="0 0 470 260"></svg></div>
+      <div class="row">
+        <label>K<sub>p</sub> <b id="v2p"></b></label><input type="range" id="k2p" min="0" max="5.24" step="0.01">
+        <label>K<sub>i</sub> <b id="v2i"></b></label><input type="range" id="k2i" min="0" max="6.08" step="0.01">
+        <label>K<sub>d</sub> <b id="v2d"></b></label><input type="range" id="k2d" min="0" max="1.13" step="0.01">
+      </div>
+      <div class="row"><button class="b" id="b2zn">ZN gains</button><button class="b" id="b2ga">Host-GA gains</button><button class="b p" id="a2play">▶ Play</button><span class="readout" id="a2r"></span></div>
+      <p class="hint">Slider ranges are the GA search box [0, 2θ<sub>ZN</sub>]: each gain may vary from zero to twice its ZN value. The model was identified from rig data: the ball velocity responds to the fan command with a first-order lag (time constant τ<sub>b</sub> = 2.7 s), and the position integrates the velocity (τ<sub>b</sub>dx/dt = −x + u − u<sub>0</sub>, dh/dt = −K<sub>b</sub>x, with u<sub>0</sub> ≈ 110 PWM the command that keeps the ball still).</p>
+    </div>
+    <div class="card"><h3>Closed-loop cost of the current gains</h3>
+      <div class="kpi" id="k2"></div>
+      <div class="how" id="k2cmp" style="margin:10px 0 0"></div>
+      <p class="hint">ITAE weights late errors by time, so slow settling is penalised. TV is the total variation of the actuator, Σ|u<sub>k</sub> − u<sub>k−1</sub>|.</p>
+      <p class="hint">This model omits sensor noise and changes in the physical rig. Its actuator-variation ranking can differ from measured trials; use the rig data to check the prediction.</p>
+      <h3 style="margin-top:12px">Side calculation: the cost of a GA on a PC</h3>
+      <p class="hint">This box does not change the simulation. It counts how many model simulations a GA on a computer needs: N<sub>p</sub> candidates in each of G + 1 generations, each simulated R times with different noise and its ITAE averaged. Compare with the on-chip GA of Stage 3, where every evaluation is a 35-s rig trial.</p>
+      <div class="row"><label>N<sub>p</sub></label><input id="h2n" type="number" value="20"><label>G</label><input id="h2g" type="number" value="50"><label>Noise realisations R</label><input id="h2r" type="number" value="3"></div>
+      <div class="calc" id="c2"></div>
+    </div>
+  </div>
+  <div class="card reading"><h3>Further reading for this stage</h3>
+    <h4>Topics</h4><ul class="topics">
+      <li>Model identification from experimental data<span class="c">[1]</span></li>
+      <li>Effect of the P, I and D terms on the response<span class="c">[2, 3]</span></li>
+      <li>Optimal tuning with performance indices (ITAE)<span class="c">[4, 5]</span></li>
+    </ul>
+    <h4>References</h4><ol class="bib">
+      <li>L. Ljung, <i>System Identification: Theory for the User</i>, 2nd ed. Prentice Hall, 1999.</li>
+      <li>G. F. Franklin, J. D. Powell, and A. Emami-Naeini, <i>Feedback Control of Dynamic Systems</i>, 8th ed. Pearson, 2019.</li>
+      <li>K. Ogata, <i>Modern Control Engineering</i>, 5th ed. Prentice Hall, 2010.</li>
+      <li>R. C. Dorf and R. H. Bishop, <i>Modern Control Systems</i>, 13th ed. Pearson, 2017.</li>
+      <li>K. J. Åström and T. Hägglund, <i>PID Controllers: Theory, Design, and Tuning</i>, 2nd ed. ISA, 1995.</li>
+    </ol></div>
+</section>
+
+<!-- ====================== STAGE 3 ====================== -->
+<section class="stage" id="s3">
+  <div class="title"><h2>Stage 3 · The GA inside the microcontroller: one worked generation</h2><span class="bloom" title="Revised Bloom level of this stage's learning outcome (Anderson and Krathwohl, 2001)">Bloom level: Apply</span></div>
+  <div class="how"><b class="h">Goal: understand exactly what the Arduino computes between two rig trials</b>
+    The table is a real first generation: 8 gain sets tested on the rig. The Arduino stores each gain as a 16-bit integer (gene, shown in hexadecimal), together with the measured ITAE.
+    <ol><li>Press <b>Next step</b> to build one new candidate: two tournaments pick the parents (tournament selection), crossover mixes their genes, mutation changes them slightly and decoding turns the genes back into gains. The right panel shows the integer arithmetic of each step.</li>
+    <li>In the lower panel, change N<sub>p</sub> and G and see how many rig trials and how much time a tuning would need. The bar shows the GA's share of the 2048 B of RAM; the firmware reserves buffers for up to 10 individuals, so this memory is the same for any N<sub>p</sub> ≤ 10.</li></ol></div>
+  <div class="grid g3">
+    <div class="card"><h3>Measured initial population (tuning <span id="r3"></span>, generation 0)</h3>
+      <table class="t" id="t3"></table>
+      <p class="hint">Gene g ∈ {0,…,65535} encodes θ = θ̄·g/65535 with θ̄ = (5.24, 6.08, 1.13). Gains and costs are measured; the random draws below are illustrative because the firmware did not log them.</p>
+      <div class="row"><button class="b" id="b3prev">◀ Previous step</button><button class="b p" id="b3next">Next step ▶</button><button class="b" id="b3new">New random draw</button><span class="tag" id="s3step"></span></div>
+    </div>
+    <div class="card"><h3>Arithmetic of the current step</h3>
+      <div class="calc" id="c3" style="min-height:250px"></div>
+    </div>
+  </div>
+  <div class="grid g2" style="margin-top:14px">
+    <div class="card"><h3>Trial budget and memory</h3>
+      <div class="row"><label>Population N<sub>p</sub></label><input id="n3" type="number" value="8" min="2" max="10"><label>Generations G</label><input id="g3" type="number" value="5" min="1" max="20"></div>
+      <div class="calc" id="c3b"></div>
+      <div class="row" style="margin-top:6px"><span class="hint" style="width:150px">RAM used by GA state</span><div class="bar" style="flex:1"><div id="ram3"></div></div><span class="mono" id="ram3t"></span></div>
+    </div>
+    <div class="card"><h3>Measured on the ATmega328P</h3>
+      <div class="kpi" id="k3"></div>
+      <p class="hint">Timing and free RAM are reported by the firmware after every generation.</p>
+    </div>
+  </div>
+  <div class="card reading"><h3>Further reading for this stage</h3>
+    <h4>Topics</h4><ul class="topics">
+      <li>Selection, crossover and mutation operators<span class="c">[1, 2]</span></li>
+      <li>Binary/integer encoding of parameters<span class="c">[1]</span></li>
+      <li>Fixed-point arithmetic and sampling on embedded controllers<span class="c">[3]</span></li>
+    </ul>
+    <h4>References</h4><ol class="bib">
+      <li>D. E. Goldberg, <i>Genetic Algorithms in Search, Optimization, and Machine Learning</i>. Addison-Wesley, 1989.</li>
+      <li>A. E. Eiben and J. E. Smith, <i>Introduction to Evolutionary Computing</i>, 2nd ed. Springer, 2015.</li>
+      <li>K. J. Åström and B. Wittenmark, <i>Computer-Controlled Systems: Theory and Design</i>, 3rd ed. Prentice Hall, 1997.</li>
+    </ol></div>
+</section>
+
+<!-- ====================== STAGE 4 ====================== -->
+<section class="stage" id="s4">
+  <div class="title"><h2>Stage 4 · Evaluating measured tuning trials</h2><span class="bloom" title="Revised Bloom level of this stage's learning outcome (Anderson and Krathwohl, 2001)">Bloom level: Evaluate</span></div>
+  <div class="how"><b class="h">Goal: judge a real GA tuning, trial by trial</b>
+    Each run is a complete on-chip tuning: 43 search trials and one confirmation trial, all measured on the rig.
+    <ol><li>Choose a run and move the <b>Trial</b> slider, or press <b>Play the search</b> to step automatically through all trials. To see one trial in motion on the drawing of the rig, select it and press <b>Play session</b> under its response. Left: the ball's response and its running cost. Red trials were <b>stopped early</b> because their cost crossed the red cap line.</li>
+    <li>Right: every tested gain set in the K<sub>p</sub>–K<sub>i</sub> plane. Watch the search concentrate near good gains.</li>
+    <li>Bottom: the best stored score during the search against the confirmation trial (green dot). A gap means the stored score was lucky. Then read the learning report and answer its questions.</li></ol></div>
+  <div class="row"><label>Tuning run</label><select id="run4"></select><label>Trial</label><input type="range" id="tr4" min="1" max="44" style="width:320px"><b id="tr4v" class="mono"></b><button class="b" id="pl4" title="Steps the trial slider through the whole search">▶ Play the search (trial by trial)</button><span id="st4"></span></div>
+  <div class="grid g2">
+    <div class="card"><h3>Current trial: measured response and running cost</h3>
+      <div class="simrow"><svg class="plant" id="plt4" viewBox="0 0 160 330"></svg><div><svg class="plot" id="p4y" viewBox="0 0 560 170"></svg><div class="row"><button class="b p" id="a4play">▶ Play session: animate the selected trial</button><span class="readout" id="a4r"></span></div><p class="hint" id="a4note" style="margin:2px 0 0">Plays only while the trial search above is not running.</p></div></div>
+      <svg class="plot" id="p4s" viewBox="0 0 560 130"></svg>
+      <div class="legend"><span><i style="background:var(--accent)"></i>Running cost S<sub>m</sub></span><span><i style="background:var(--bad)"></i>Interruption cap λJ<sub>b</sub> (λ = 2)</span></div>
+      <p class="hint">Accumulated ITAE cannot decrease. If it exceeds twice the best stored cost, this realised trial cannot beat that result; a repeat under noise may differ.</p>
+    </div>
+    <div class="card"><h3>Search so far: proportional–integral gain plane</h3>
+      <svg class="plot" id="p4k" viewBox="0 0 560 300"></svg>
+      <div class="legend"><span><i style="background:var(--accent);height:8px;width:8px;border-radius:4px"></i>Completed (darker = lower ITAE)</span><span style="color:var(--bad)">× Interrupted</span><span>◆ Current</span></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:14px"><h3>Best stored score versus independent confirmation (normalised by same-session ZN mean)</h3>
+    <svg class="plot" id="p4b" viewBox="0 0 1100 190"></svg>
+  </div>
+  <div class="card learning" id="r4Report"></div>
+  <div class="card reading"><h3>Further reading for this stage</h3>
+    <h4>Topics</h4><ul class="topics">
+      <li>Repeated trials and experimental variability<span class="c">[1]</span></li>
+      <li>Selection bias under noisy fitness; re-evaluation<span class="c">[2]</span></li>
+      <li>Response metrics: overshoot, settling time, ITAE<span class="c">[3, 4]</span></li>
+    </ul>
+    <h4>References</h4><ol class="bib">
+      <li>D. C. Montgomery, <i>Design and Analysis of Experiments</i>, 9th ed. Wiley, 2017.</li>
+      <li>A. E. Eiben and J. E. Smith, <i>Introduction to Evolutionary Computing</i>, 2nd ed. Springer, 2015.</li>
+      <li>K. Ogata, <i>Modern Control Engineering</i>, 5th ed. Prentice Hall, 2010.</li>
+      <li>R. C. Dorf and R. H. Bishop, <i>Modern Control Systems</i>, 13th ed. Pearson, 2017.</li>
+    </ol></div>
+</section>
+
+<!-- ====================== STAGE 5 ====================== -->
+<section class="stage" id="s5">
+  <div class="title"><h2>Stage 5 · Designing a retuning rule</h2><span class="bloom" title="Revised Bloom level of this stage's learning outcome (Anderson and Krathwohl, 2001)">Bloom level: Create</span></div>
+  <div class="how"><b class="h">The situation</b>
+    The ball has been tuned to float at 15 cm. The Arduino now runs the plant for a long time, in <b>episodes</b> of 30 s, and after each episode it scores how well the controller did: the episode cost J<sub>n</sub> (<b>higher = worse</b>). At some point an operator moves the setpoint to 24 cm. The old gains were tuned for 15 cm, so the control gets worse and the cost jumps.
+    <br>The Arduino must <b>notice this by itself</b> and start a new GA tuning. It does so with an <b>alarm level</b>: if an episode costs more than γ times the cost of the first episode, it retunes. Your job is to choose γ, like setting the sensitivity of a smoke alarm. Comparing a running cost with a reference value is the basic idea of controller performance monitoring:
+    <ul style="margin:4px 0 0 18px;padding:0"><li>too sensitive (γ small): it goes off with normal noise at 15 cm and starts a useless 25-min tuning;</li><li>too insensitive (γ large): it stays silent when the setpoint really changes.</li></ul></div>
+  <div class="card" style="margin-bottom:14px">
+    <div class="row"><b>1.</b><label>Experiment</label><select id="ex5"></select>
+      <b style="margin-left:14px">2.</b><label><b>Alarm sensitivity γ</b></label><input type="range" id="g5" min="1" max="8" step="0.05" value="1.5" style="width:260px"><b id="g5v" class="mono" style="font-size:16px"></b></div>
+    <div class="row"><b>3.</b><button class="b p" id="n5">▶ Next episode</button><button class="b" id="r5">↺ Restart</button><button class="b" id="a5">Show all episodes</button><span class="hint">Step through the episodes and read what the Arduino decides at each one.</span></div>
+    <div class="how" id="e5" style="margin:6px 0 0;font-size:14px;background:#fff8ef;border-left-color:var(--accent2)"></div>
+  </div>
+  <div class="grid g21">
+    <div class="card"><h3>Episode cost J<sub>n</sub> (bars) and your alarm level γ·J<sub>ref</sub> (red line)</h3>
+      <svg class="plot" id="p5" viewBox="0 0 760 280"></svg>
+      <div class="legend"><span><i style="background:#8f8d84;height:9px"></i>no alarm</span><span><i style="background:#a8281b;height:9px"></i>false alarm at 15 cm</span><span><i style="background:#21744a;height:9px"></i>alarm at the change (correct)</span><span><i style="background:#c25a12;height:9px"></i>change missed</span><span><i style="background:#d5d9df;height:9px"></i>busy retuning after a false alarm</span><span><i style="background:#b8cde4;height:9px"></i>after the retuning done on the rig</span></div>
+    </div>
+    <div class="card"><h3>Your result</h3>
+      <div class="how" id="v5" style="margin:0 0 8px"></div>
+      <div class="calc" id="c5" style="font-size:12px"></div></div>
+  </div>
+  <div class="card reading"><h3>Further reading for this stage</h3>
+    <h4>Topics</h4><ul class="topics">
+      <li>Control-loop performance monitoring<span class="c">[1]</span></li>
+      <li>When and how to retune: adaptive control<span class="c">[2]</span></li>
+      <li>Threshold-based change detection (false and missed alarms)<span class="c">[3]</span></li>
+    </ul>
+    <h4>References</h4><ol class="bib">
+      <li>D. E. Seborg, T. F. Edgar, D. A. Mellichamp, and F. J. Doyle III, <i>Process Dynamics and Control</i>, 4th ed. Wiley, 2017.</li>
+      <li>K. J. Åström and B. Wittenmark, <i>Adaptive Control</i>, 2nd ed. Addison-Wesley, 1995.</li>
+      <li>M. Basseville and I. V. Nikiforov, <i>Detection of Abrupt Changes: Theory and Application</i>. Prentice Hall, 1993.</li>
+    </ol></div>
+</section>
+
+<!-- ====================== LIVE RIG ====================== -->
+<section class="stage" id="s6">
+  <div class="title"><h2>Live rig · new experiments on the ball-in-tube levitator</h2></div>
+  <div class="how"><b class="h">Goal: run your own experiments</b>
+    <ol><li>Connect the Arduino with a USB cable and press <b>Connect to Arduino</b> (Chrome or Edge), or press <b>Use firmware emulator</b> to practise without the rig.</li>
+    <li>Choose an experiment, set the gains and press <b>Start</b>. The drawing of the rig follows the measured distance in real time.</li>
+    <li>When the experiment ends, read the learning report below the result and answer its questions.</li></ol></div>
+  <div class="card">
+    <div class="row">
+      <button class="b p" id="lvConnect">Connect to Arduino</button>
+      <button class="b" id="lvDemo">Use firmware emulator (no rig)</button>
+      <button class="b" id="lvStop" style="border-color:var(--bad);color:var(--bad)">■ STOP (fan off)</button>
+      <span class="tag" id="lvStatus">Not connected</span>
+      <span class="hint" id="lvInfo"></span>
+    </div>
+    <p class="hint" style="margin:4px 0 0">The emulator speaks the same serial protocol, with the identified model and sensor noise; it checks the workflow, not plant behaviour. Chrome or Edge, USB cable to the Nano running the project firmware (115200 baud). “Connect” opens the browser's port list: choose the Arduino's COM port. The page then performs the READY/START handshake and sets ball mode.</p>
+  </div>
+  <div class="grid g3" style="margin-top:14px">
+    <div class="card"><h3>Experiment</h3>
+      <div class="row"><label>Type</label>
+        <select id="lvType">
+          <option value="run">Quick test · one closed-loop step (≈ 40 s)</option>
+          <option value="relay">Relay test → Ku, Pu, ZN gains (≈ 45 s)</option>
+          <option value="tune">Run GA tuning: optimise PID gains (about 25 min for 8x5)</option>
+          <option value="auto">Run supervisory control: retune when triggered (about 30 min)</option>
+        </select>
+        <button class="b p" id="lvGo">Start</button>
+      </div>
+      <div class="row" id="lvGains"><label>Gains K<sub>p</sub></label><input id="lvKp" type="number" step="0.01" value="2.62"><label>K<sub>i</sub></label><input id="lvKi" type="number" step="0.01" value="3.04"><label>K<sub>d</sub></label><input id="lvKd" type="number" step="0.01" value="0.56"><button class="b" id="lvUseZN">ZN</button><button class="b" id="lvUseLive">Last live result</button></div>
+      <div class="row"><label>Setpoint r (cm)</label><input id="lvSp" type="number" value="15" step="0.5"><label>Setpoint B (auto)</label><input id="lvSpB" type="number" value="24" step="0.5"></div>
+      <div class="row"><label>N<sub>p</sub></label><input id="lvNp" type="number" value="8" min="3" max="10"><label>G</label><input id="lvG" type="number" value="5" min="1"><label>Seed</label><input id="lvSeed" type="number" value="11"><label>Bounds</label><input id="lvB" style="width:130px" value="5.24,6.08,1.13"></div>
+      <div class="row"><span class="tag" id="lvPhase">idle</span><span class="hint" id="lvEta"></span></div>
+      <div class="simrow"><svg class="plant" id="pltL" viewBox="0 0 160 330"></svg><svg class="plot" id="lvPlot" viewBox="0 0 640 230"></svg></div>
+      <div class="legend"><span><i style="background:var(--accent)"></i>Measured h (cm)</span><span><i style="background:var(--accent2)"></i>Fan PWM / 10</span><span><i style="background:#8f8d84"></i>Reference ZN mean (replay data)</span></div>
+    </div>
+    <div class="card"><h3>Result</h3>
+      <div class="kpi" id="lvKpi"></div>
+      <div class="calc" id="lvRes" style="margin-top:8px;min-height:120px">No experiment yet.</div>
+      <div class="row"><button class="b" id="lvCsv">Download CSV (rows + events)</button><button class="b" id="lvToReplay">Open in Stage 4 replay</button><button class="b" id="lvOpen">Open recorded log…</button><input type="file" id="lvFile" accept=".csv" multiple style="display:none"></div>
+      <h3 style="margin-top:8px">Serial log</h3>
+      <div class="calc" id="lvLog" style="height:150px;overflow:auto;font-size:11.5px"></div>
+    </div>
+  </div>
+  <div class="card learning" id="lvReport" hidden></div>
+  <div class="card" style="margin-top:14px" id="lvTuneCard"><h3>Live GA search: gain plane and best stored score</h3>
+    <div class="grid g2"><svg class="plot" id="lvK" viewBox="0 0 560 260"></svg><svg class="plot" id="lvBest" viewBox="0 0 560 260"></svg></div>
+  </div>
+  <div class="card reading"><h3>Further reading for this stage</h3>
+    <h4>Topics</h4><ul class="topics">
+      <li>Sampled-data control and sampling period<span class="c">[1]</span></li>
+      <li>Arduino hardware, PWM and serial communication<span class="c">[2]</span></li>
+      <li>Relay test and PID tuning on the rig<span class="c">[3]</span></li>
+    </ul>
+    <h4>References</h4><ol class="bib">
+      <li>K. J. Åström and B. Wittenmark, <i>Computer-Controlled Systems: Theory and Design</i>, 3rd ed. Prentice Hall, 1997.</li>
+      <li>M. Margolis, B. Jepson, and N. R. Weldin, <i>Arduino Cookbook</i>, 3rd ed. O’Reilly, 2020.</li>
+      <li>K. J. Åström and T. Hägglund, <i>PID Controllers: Theory, Design, and Tuning</i>, 2nd ed. ISA, 1995.</li>
+    </ol></div>
+</section>
+
+</main>
+</div>
+<script src="data.js"></script>
+<script src="report.js"></script>
+<script>
+"use strict";
+const D = window.TUNELAB_DATA, T = 0.1, UB = [5.24, 6.08, 1.13], Q = 65535;
+const ZN = [2.62, 3.04, 0.56], HOST = [2.56, 3.45, 1.13];
+const MODEL = {Kb: 7.7316, tau: 2.709, L: 0.0383, u0: 110.4};
+const C = {accent:"#1c5591", accent2:"#c25a12", bad:"#a8281b", good:"#21744a", ink2:"#3f4857", muted:"#687183", line:"#cfd5de", grid:"#e1e6ec", grey:"#8f8d84"};
+const $ = id => document.getElementById(id);
+const f2 = x => (+x).toFixed(2), f0 = x => Math.round(x).toString();
+const mean = a => a.reduce((s, v) => s + v, 0) / a.length;
+const ZNMEAN = {A: mean(D.baselines.A.ZN.J), B: mean(D.baselines.B.ZN.J)};
+const HOSTMEAN = {A: mean(D.baselines.A.GA.J), B: mean(D.baselines.B.GA.J)};
+
+/* ---------- small SVG plotting helper ---------- */
+function plot(svg, o) {
+  const W = svg.viewBox.baseVal.width, H = svg.viewBox.baseVal.height;
+  const m = Object.assign({l: 44, r: 12, t: 10, b: 30}, o.m || {});
+  const [x0, x1] = o.x, [y0, y1] = o.y;
+  const sx = x => m.l + (x - x0) / (x1 - x0) * (W - m.l - m.r);
+  const sy = y => H - m.b - (y - y0) / (y1 - y0) * (H - m.t - m.b);
+  let s = "";
+  const ticks = (a, b, n) => { const st = niceStep((b - a) / n); const out = []; for (let v = Math.ceil(a / st) * st; v <= b + 1e-9; v += st) out.push(+v.toFixed(6)); return out; };
+  for (const v of (o.yt || ticks(y0, y1, 4))) s += `<line x1="${m.l}" x2="${W - m.r}" y1="${sy(v)}" y2="${sy(v)}" stroke="${C.grid}"/><text x="${m.l - 6}" y="${sy(v) + 4}" font-size="11" text-anchor="end" fill="${C.ink2}">${fmtTick(v)}</text>`;
+  for (const v of (o.xt || ticks(x0, x1, 6))) s += `<text x="${sx(v)}" y="${H - m.b + 15}" font-size="11" text-anchor="middle" fill="${C.ink2}">${fmtTick(v)}</text>`;
+  s += `<line x1="${m.l}" x2="${W - m.r}" y1="${H - m.b}" y2="${H - m.b}" stroke="${C.muted}"/>`;
+  if (o.xl) s += `<text x="${(m.l + W - m.r) / 2}" y="${H - 2}" font-size="11.5" text-anchor="middle" fill="${C.ink2}">${o.xl}</text>`;
+  if (o.yl) s += `<text transform="translate(12,${(m.t + H - m.b) / 2}) rotate(-90)" font-size="11.5" text-anchor="middle" fill="${C.ink2}">${o.yl}</text>`;
+  for (const h of (o.hl || [])) s += `<line x1="${m.l}" x2="${W - m.r}" y1="${sy(h.y)}" y2="${sy(h.y)}" stroke="${h.c}" stroke-dasharray="${h.dash || "5 4"}" stroke-width="1.5"/>` + (h.t ? `<text x="${W - m.r - 4}" y="${sy(h.y) - 4}" font-size="11" text-anchor="end" fill="${h.c}">${h.t}</text>` : "");
+  for (const L of (o.lines || [])) {
+    const pts = L.y.map((v, i) => `${sx(L.x ? L.x[i] : i * (L.dx || 1))},${sy(Math.max(y0, Math.min(y1, v)))}`).join(" ");
+    s += `<polyline points="${pts}" fill="none" stroke="${L.c}" stroke-width="${L.w || 2}" stroke-opacity="${L.a || 1}" ${L.dash ? `stroke-dasharray="${L.dash}"` : ""} stroke-linejoin="round"/>`;
+  }
+  for (const b of (o.bars || [])) { const w = b.w || 0.6; s += `<rect x="${sx(b.x - w / 2)}" y="${sy(Math.max(b.y, y0))}" width="${sx(b.x + w / 2) - sx(b.x - w / 2)}" height="${sy(y0) - sy(Math.max(b.y, y0))}" fill="${b.c}" rx="3"/>`; if (b.t) s += `<text x="${sx(b.x)}" y="${sy(b.y) - 4}" font-size="11" text-anchor="middle" fill="${C.ink2}">${b.t}</text>`; }
+  for (const p of (o.pts || [])) {
+    const X = sx(p.x), Y = sy(p.y), r = p.r || 4.5;
+    if (p.k === "x") s += `<path d="M${X - r},${Y - r}L${X + r},${Y + r}M${X - r},${Y + r}L${X + r},${Y - r}" stroke="${p.c}" stroke-width="1.6"/>`;
+    else if (p.k === "d") s += `<path d="M${X},${Y - r - 2}L${X + r + 2},${Y}L${X},${Y + r + 2}L${X - r - 2},${Y}Z" fill="${p.c}" stroke="#fff" stroke-width="1.5"/>`;
+    else s += `<circle cx="${X}" cy="${Y}" r="${r}" fill="${p.c}" stroke="${p.s || "#fff"}" stroke-width="${p.sw || 1.2}" ${p.o ? `fill-opacity="${p.o}"` : ""}/>`;
+    if (p.t) s += `<text x="${X + 7}" y="${Y - 7}" font-size="11" fill="${p.tc || C.ink2}">${p.t}</text>`;
+  }
+  for (const t of (o.txt || [])) s += `<text x="${sx(t.x)}" y="${sy(t.y)}" font-size="11.5" fill="${t.c || C.ink2}" text-anchor="${t.a || "start"}">${t.t}</text>`;
+  svg.innerHTML = s;
+  svg.__s = {sx, sy, m, W, H, x0, x1, y0, y1};
+}
+/* ---------- time cursor on a plot ---------- */
+function cursor(svg, x) {
+  const S = svg.__s; if (!S) return;
+  let c = svg.querySelector(".cur");
+  if (x === null) { if (c) c.remove(); return; }
+  if (!c) { c = document.createElementNS("http://www.w3.org/2000/svg", "line"); c.setAttribute("class", "cur"); c.setAttribute("stroke", C.accent2); c.setAttribute("stroke-width", "1.5"); c.setAttribute("stroke-dasharray", "3 3"); svg.appendChild(c); }
+  const X = S.sx(Math.max(S.x0, Math.min(S.x1, x)));
+  c.setAttribute("x1", X); c.setAttribute("x2", X); c.setAttribute("y1", S.m.t); c.setAttribute("y2", S.H - S.m.b);
+}
+/* ---------- drawing of the rig: tube, ball, fan, sensor ---------- */
+const PL = {top: 34, len: 236, hmax: 32};
+function plant(svg, h, u, sp, ang) {
+  const yb = PL.top + Math.max(0, Math.min(PL.hmax, h)) / PL.hmax * PL.len, ys = PL.top + sp / PL.hmax * PL.len, a = Math.max(0, Math.min(255, u)) / 255;
+  let s = `<rect x="58" y="${PL.top - 24}" width="44" height="20" rx="4" fill="#3f4857"/><circle cx="72" cy="${PL.top - 14}" r="6" fill="#cfd5de"/><circle cx="88" cy="${PL.top - 14}" r="6" fill="#cfd5de"/><text x="80" y="${PL.top - 28}" font-size="10" text-anchor="middle" fill="${C.ink2}">sensor</text>`;
+  s += `<rect x="60" y="${PL.top}" width="40" height="${PL.len}" fill="#eef3f9" stroke="#9aa6b5" stroke-width="1.5"/>`;
+  for (let i = 0; i < 4; i++) { const yy = PL.top + PL.len - ((i * 60 + (ang * 3) % 60) % PL.len); s += `<path d="M70 ${yy} l5 -10 l5 10 M85 ${yy + 25} l5 -10 l5 10" stroke="${C.accent}" stroke-opacity="${(0.15 + 0.6 * a).toFixed(2)}" fill="none" stroke-width="1.3"/>`; }
+  s += `<line x1="52" x2="108" y1="${ys}" y2="${ys}" stroke="${C.muted}" stroke-dasharray="4 3"/><text x="112" y="${ys + 4}" font-size="10" fill="${C.ink2}">r = ${sp} cm</text>`;
+  s += `<line x1="40" x2="56" y1="${PL.top}" y2="${PL.top}" stroke="${C.ink2}"/><line x1="48" x2="48" y1="${PL.top}" y2="${yb}" stroke="${C.ink2}" marker-end="url(#${svg.id}ar)"/><text x="44" y="${(PL.top + yb) / 2}" font-size="10" text-anchor="end" fill="${C.ink2}">h</text>`;
+  s += `<defs><marker id="${svg.id}ar" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0L6,3L0,6Z" fill="${C.ink2}"/></marker><radialGradient id="${svg.id}bg"><stop offset="0" stop-color="#ffd7b0"/><stop offset="1" stop-color="${C.accent2}"/></radialGradient></defs>`;
+  s += `<circle cx="80" cy="${yb}" r="12" fill="url(#${svg.id}bg)" stroke="#8a3d0a" stroke-width="1"/>`;
+  const fy = PL.top + PL.len + 16;
+  s += `<rect x="54" y="${PL.top + PL.len}" width="52" height="32" rx="5" fill="#dfe5ec" stroke="#9aa6b5"/><g transform="translate(80 ${fy}) rotate(${ang})">` + [0, 120, 240].map(r => `<ellipse cx="0" cy="-7" rx="3.5" ry="7.5" fill="#3f4857" transform="rotate(${r})"/>`).join("") + `<circle r="2.5" fill="#fff"/></g>`;
+  s += `<text x="80" y="${PL.top + PL.len + 44}" font-size="10.5" text-anchor="middle" fill="${C.ink2}">fan · u = ${Math.round(u)}</text>`;
+  s += `<text x="112" y="${Math.abs(yb - ys) < 14 ? yb + 20 : yb + 4}" font-size="11" fill="${C.accent}" font-weight="600">${h.toFixed(1)} cm</text>`;
+  svg.innerHTML = s;
+}
+/* ---------- animator: plays a trajectory on the rig drawing and moves a cursor on plots ---------- */
+const ANIMS = {};
+function animate(key, o) {
+  // o: {plant, plots: [svg], y: [], u: [], sp, t0 (time of sample 0 on the plots), btn, readout, speed}
+  if (ANIMS[key]) { clearTimeout(ANIMS[key].raf); }
+  const A = ANIMS[key] = {k: 0, ang: 0, last: performance.now(), raf: 0};
+  const n = o.y.length, sp = o.sp || 15, spd = o.speed || 2;
+  const lbl = o.btn ? o.btn.textContent : "";
+  if (o.btn) o.btn.textContent = "■ Stop";
+  if (o.btn) o.btn.onclick = () => stop();
+  function stop() { clearTimeout(A.raf); if (o.btn) { o.btn.textContent = lbl; o.btn.onclick = o.restart; } }
+  function step(now) {
+    const dt = Math.max(0, (now - A.last) / 1000); A.last = now;
+    A.k = Math.min(n - 1, A.k + dt * spd / T);
+    const i = Math.floor(A.k), u = o.u[i] || 0;
+    A.ang = (A.ang + dt * (60 + u * 6)) % 360;
+    plant(o.plant, o.y[i], u, sp, A.ang);
+    (o.plots || []).forEach(p => cursor(p, (o.t0 || 0) + i * T));
+    if (o.readout) o.readout.textContent = `t = ${(i * T).toFixed(1)} s   h = ${o.y[i].toFixed(1)} cm   u = ${Math.round(u)}` + (o.extra ? o.extra(i) : "");
+    if (i < n - 1) A.raf = setTimeout(() => step(performance.now()), 33); else stop();
+  }
+  A.raf = setTimeout(() => step(performance.now()), 33);
+}
+function niceStep(x) { const p = Math.pow(10, Math.floor(Math.log10(x))), f = x / p; return (f < 1.5 ? 1 : f < 3.5 ? 2 : f < 7.5 ? 5 : 10) * p; }
+function fmtTick(v) { return Math.abs(v) >= 100 ? v.toFixed(0) : (+v.toFixed(2)).toString(); }
+
+/* ---------- cost with the firmware's start-up scoring rule ---------- */
+function runningCost(y, r) {
+  const S = []; let s = 0;
+  for (let k = 0; k < y.length; k++) {
+    if (k === 3) s += 6 * T * T * Math.abs(r - y[3]);
+    else if (k > 3) s += k * T * T * Math.abs(r - y[k]);
+    S.push(s);
+  }
+  return S;
+}
+
+/* ---------- navigation ---------- */
+const STAGES = [["Start here", "theory and how to use"], ["Relay & Ziegler–Nichols", "LO1 apply a tuning rule"], ["Model-based GA", "LO2 explain fitness and budget"],
+  ["GA on the chip", "LO3 apply encoding and operators"], ["Evaluate tuning trials", "LO4 evaluate stopping and confirmation"], ["Retuning", "LO5 design a supervisory rule"], ["Live rig", "new experiments on the Arduino"]];
+function go(i) {
+  document.querySelectorAll(".stage").forEach((e, j) => e.classList.toggle("on", j === i));
+  document.querySelectorAll("nav button").forEach((e, j) => e.classList.toggle("on", j === i));
+  [draw0, draw1, draw2, draw3, draw4, draw5, draw6][i]();
+}
+$("nav").innerHTML = STAGES.map((s, i) => `<button onclick="go(${i})"><span class="n">${i === 0 ? "i" : i < 6 ? i : "⚡"}</span>${s[0]}<span class="lo">${s[1]}</span></button>`).join("") +
+  `<div class="foot">Ball-in-tube levitator · Arduino Nano (ATmega328P, 2 KB RAM) · T = 0.1 s · r = 15 cm. All curves are measured on the rig except the Stage 2 model simulation.</div>`;
+
+/* ====================== STAGE 0 ====================== */
+function draw0() {
+  const k = [+$("k0p").value, +$("k0i").value, +$("k0d").value];
+  $("v0p").textContent = f2(k[0]); $("v0i").textContent = f2(k[1]); $("v0d").textContent = f2(k[2]);
+  const s = simulate(k), m = metrics(s.y, s.u);
+  plot($("p0"), {x: [0, 30], y: [0, 32], xl: "Time (s)", yl: "cm", lines: [{y: s.u.map(v => v / 10), dx: T, c: C.accent2, w: 1.3}, {y: s.y, dx: T, c: C.accent, w: 2.2}], hl: [{y: 15, c: C.muted, t: `ITAE ${f0(m.J)} cm s² · overshoot ${f0(m.os)} %`}]});
+  plant($("plt0"), s.y[0], 0, 15, 0);
+  return s;
+}
+["k0p", "k0i", "k0d"].forEach(id => $(id).oninput = () => { if (ANIMS.s0) clearTimeout(ANIMS.s0.raf); $("a0play").textContent = "▶ Play step response"; $("a0play").onclick = play0; draw0(); });
+function play0() { const s = draw0(); animate("s0", {plant: $("plt0"), plots: [$("p0")], y: s.y, u: s.u, btn: $("a0play"), readout: $("a0r"), restart: play0}); }
+$("a0play").onclick = play0;
+
+/* ====================== STAGE 1 ====================== */
+let q1show = false;
+let z1full = false;
+function draw1() {
+  const y = D.relay.y.slice(1), u = D.relay.u.slice(1).map(v => v / 10);
+  const X0 = z1full ? 0 : 8.3, X1 = z1full ? 40 : 11.6, i0 = Math.round(X0 / T), i1 = Math.min(y.length - 1, Math.round(X1 / T));
+  const tt = [], yy = [], uu = []; for (let i = i0; i <= i1; i++) { tt.push(i * T); yy.push(y[i]); uu.push(u[i]); }
+  $("lg1").style.display = z1full ? "" : "none";
+  if (z1full) plot($("p1relay"), {x: [X0, X1], y: [0, 36], xl: "Time (s)", yl: "h (cm)", lines: [{x: tt, y: uu, c: C.accent2, w: 1.5}, {x: tt, y: yy, c: C.accent, w: 2}], hl: [{y: 15, c: C.muted, t: "r = 15 cm"}]});
+  else {
+    // one cycle of the measured oscillation: peak at 9.1 s, valley at 10.2 s, next peak at 10.8 s
+    plot($("p1relay"), {x: [X0, X1], y: [0, 36], xl: "Time (s)", yl: "h (cm)", lines: [{x: tt, y: yy, c: C.accent, w: 2.4}]});
+    const S = $("p1relay").__s, X = S.sx, Y = S.sy, GA = "#21744a", PU = "#7b3fa0", p1 = 91, v1 = 102, p2 = 108, yp = y[p1], yv = y[v1], xa = 10.2 + 0.55;
+    let a = `<defs><marker id="m1a" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L8,4L0,8Z" fill="${GA}"/></marker><marker id="m1p" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L8,4L0,8Z" fill="${PU}"/></marker></defs>`;
+    // amplitude: peak and valley lines, arrow 2a
+    a += `<line x1="${X(p1 * T)}" x2="${X(xa) + 6}" y1="${Y(yp)}" y2="${Y(yp)}" stroke="${GA}" stroke-dasharray="4 3" stroke-width="1.5"/>`;
+    a += `<line x1="${X(v1 * T)}" x2="${X(xa) + 6}" y1="${Y(yv)}" y2="${Y(yv)}" stroke="${GA}" stroke-dasharray="4 3" stroke-width="1.5"/>`;
+    a += `<line x1="${X(xa)}" x2="${X(xa)}" y1="${Y(yp)}" y2="${Y(yv)}" stroke="${GA}" stroke-width="2.6" marker-start="url(#m1a)" marker-end="url(#m1a)"/>`;
+    a += `<text x="${X(xa) + 10}" y="${Y((yp + yv) / 2) + 6}" font-size="17" font-weight="700" fill="${GA}">2a</text>`;
+    a += `<circle cx="${X(p1 * T)}" cy="${Y(yp)}" r="4.5" fill="${GA}"/><circle cx="${X(v1 * T)}" cy="${Y(yv)}" r="4.5" fill="${GA}"/>`;
+    a += `<text x="${X(p1 * T)}" y="${Y(yp) + 20}" font-size="11.5" font-weight="600" text-anchor="middle" fill="${GA}">peak</text><text x="${X(v1 * T)}" y="${Y(yv) + 18}" font-size="11.5" font-weight="600" text-anchor="middle" fill="${GA}">valley</text>`;
+    // period: arrow between two peaks
+    a += `<line x1="${X(p1 * T)}" x2="${X(p1 * T)}" y1="${Y(yp) - 6}" y2="${Y(34.5)}" stroke="${PU}" stroke-dasharray="2 2"/><line x1="${X(p2 * T)}" x2="${X(p2 * T)}" y1="${Y(y[p2]) - 6}" y2="${Y(34.5)}" stroke="${PU}" stroke-dasharray="2 2"/>`;
+    a += `<line x1="${X(p1 * T)}" x2="${X(p2 * T)}" y1="${Y(33)}" y2="${Y(33)}" stroke="${PU}" stroke-width="2.6" marker-start="url(#m1p)" marker-end="url(#m1p)"/>`;
+    a += `<text x="${X((p1 + p2) / 2 * T)}" y="${Y(33) - 7}" font-size="17" font-weight="700" text-anchor="middle" fill="${PU}">P<tspan font-size="12" dy="4">u</tspan></text>`;
+    $("p1relay").insertAdjacentHTML("beforeend", a);
+  }
+  const d = +$("d1").value, a = +$("a1").value, Pu = +$("pu1").value;
+  if (q1show) {
+    const A = 11.66, P = 1.72, Ku = 4 * d / (Math.PI * A), Kp = 0.6 * Ku;
+    $("c1").textContent = `Worked solution (measured a = ${A} cm, Pu = ${P} s):\nKu = 4d/(πa) = 4·${d}/(π·${A}) = ${Ku.toFixed(2)}\nKp = 0.6·Ku = ${Kp.toFixed(2)}\nTi = Pu/2 = ${(P / 2).toFixed(3)} s  →  Ki = Kp/Ti = ${(Kp / (P / 2)).toFixed(2)}\nTd = Pu/8 = ${(P / 8).toFixed(3)} s  →  Kd = Kp·Td = ${(Kp * P / 8).toFixed(2)}`;
+  } else $("c1").textContent = `Ziegler–Nichols rule (relay version):\nKu = 4d/(πa)        ultimate gain\nKp = 0.6·Ku\nTi = Pu/2   →  Ki = Kp/Ti\nTd = Pu/8   →  Kd = Kp·Td` + (a > 0 && Pu > 0 ? `\n\nWith your a = ${a} cm and Pu = ${Pu} s: Ku = ${(4 * d / (Math.PI * a)).toFixed(2)}` : "");
+  const ys = D.baselines.A.ZN.y;
+  plot($("p1zn"), {x: [0, 30], y: [0, 32], xl: "Time (s)", yl: "h (cm)", m: {l: 44}, lines: ys.slice(1).map(v => ({y: v.slice(1), dx: T, c: C.accent, w: 1.2, a: 0.25})).concat([{y: ys[0].slice(1), dx: T, c: C.accent, w: 2.2}]), hl: [{y: 15, c: C.muted, t: `setpoint · mean ITAE ${f0(ZNMEAN.A)} cm s²`}]});
+  plant($("plt1"), ys[0][10], 0, 15, 0);
+}
+function play1() { const y = D.baselines.A.ZN.y[0].slice(1); animate("s1", {plant: $("plt1"), plots: [$("p1zn")], y, u: (D.baselines.A.ZN.u ? D.baselines.A.ZN.u[0].slice(1) : y.map(() => 0)), btn: $("a1play"), readout: $("a1r"), restart: play1}); }
+$("a1play").onclick = play1;
+$("p1relay").onmousemove = ev => {
+  const S = $("p1relay").__s; if (!S) return; const r = $("p1relay").getBoundingClientRect();
+  const X = (ev.clientX - r.left) / r.width * S.W, t = S.x0 + (X - S.m.l) / (S.W - S.m.l - S.m.r) * (S.x1 - S.x0);
+  const y = D.relay.y.slice(1), i = Math.round(t / T);
+  if (i < 0 || i >= y.length) return; cursor($("p1relay"), i * T);
+  $("p1ro").textContent = `t = ${(i * T).toFixed(1)} s    h = ${y[i].toFixed(2)} cm`;
+};
+["d1", "a1", "pu1"].forEach(id => $(id).oninput = draw1);
+$("q1b").onclick = () => {
+  const f = $("q1f"), a = +$("a1").value, Pu = +$("pu1").value, msg = [];
+  const aOk = Math.abs(a - 11.66) <= 1.2, pOk = Math.abs(Pu - 1.72) <= 0.15;
+  if (!a || !Pu) { f.className = "fb no"; f.textContent = "First measure a and Pu on the relay plot and enter them."; return; }
+  if (!aOk) msg.push(`a: use the value in the green box below the relay plot`);
+  if (!pOk) msg.push(`Pu: use the value in the purple box below the relay plot`);
+  const Ku = 4 * 40 / (Math.PI * a), Kp = 0.6 * Ku, ref = [Kp, Kp / (Pu / 2), Kp * Pu / 8];
+  const ok = ["q1p", "q1i", "q1d"].map((id, j) => Math.abs(+$(id).value - ref[j]) <= Math.max(0.03, 0.02 * ref[j]));
+  ["Kp", "Ki", "Kd"].forEach((n, j) => { if (!ok[j]) msg.push(`${n}: does not follow from your a and Pu; apply the formula above`); });
+  f.className = "fb " + (msg.length ? "no" : "ok");
+  f.innerHTML = msg.length ? msg.join("<br>") : `Correct. Your gains (${ref.map(f2).join(", ")}) agree with the measured ZN gains (2.62, 3.04, 0.56) within the accuracy of reading the plot.`;
+};
+$("z1").onclick = () => { z1full = !z1full; $("z1").textContent = z1full ? "Back to one cycle with a and Pu marked" : "Show the full 40-s test"; draw1(); };
+$("q1s").onclick = () => { q1show = !q1show; $("q1s").textContent = q1show ? "Hide worked solution" : "Show worked solution"; draw1(); };
+
+/* ====================== STAGE 2 ====================== */
+function simulate(k, n = 300) {
+  const dt = 0.02, sub = 5, dl = Math.round(MODEL.L / dt), buf = new Array(Math.max(dl, 1)).fill(0);
+  let h = 31, x = 0, I = 0, ep = 0; const y = [], u = [];
+  for (let s = 0; s < n; s++) {
+    const e = h - 15, In = I + e;
+    let v = k[0] * e + k[1] * T * In + k[2] * (e - ep) / T;
+    if ((v > 255 && e > 0) || (v < 0 && e < 0)) v = k[0] * e + k[1] * T * I + k[2] * (e - ep) / T; else I = In;
+    ep = e; const uk = Math.min(255, Math.max(0, v)); y.push(h); u.push(uk);
+    for (let j = 0; j < sub; j++) { buf.push(uk); const ud = dl > 0 ? buf.shift() : uk; x += dt / MODEL.tau * (-x + (ud - MODEL.u0)); h += -MODEL.Kb * x * dt; if (h < 3 || h > 31) { h = Math.min(31, Math.max(3, h)); x = 0; } }
+  }
+  return {y, u};
+}
+function metrics(y, u) {
+  const J = runningCost(y, 15).at(-1); const os = Math.max(0, (15 - Math.min(...y.slice(3))) / 15 * 100);
+  let tv = 0; for (let k = 4; k < u.length; k++) tv += Math.abs(u[k] - u[k - 1]);
+  let ts = 0; for (let k = y.length - 1; k >= 0; k--) if (Math.abs(y[k] - 15) > 2) { ts = (k + 1) * T; break; }
+  return {J, os, tv, ts};
+}
+function setK2(k) { $("k2p").value = k[0]; $("k2i").value = k[1]; $("k2d").value = k[2]; draw2(); }
+function draw2() {
+  const k = [+$("k2p").value, +$("k2i").value, +$("k2d").value];
+  $("v2p").textContent = f2(k[0]); $("v2i").textContent = f2(k[1]); $("v2d").textContent = f2(k[2]);
+  const s = simulate(k), zn = simulate(ZN), m = metrics(s.y, s.u);
+  if (ANIMS.s2) { clearTimeout(ANIMS.s2.raf); $("a2play").textContent = "▶ Play"; $("a2play").onclick = play2; } plant($("plt2"), s.y[0], 0, 15, 0);
+  plot($("p2sim"), {x: [0, 30], y: [0, 32], xl: "Time (s)", yl: "h (cm, model)", lines: [{y: zn.y, dx: T, c: C.grey, w: 1.5, dash: "5 4"}, {y: s.y, dx: T, c: C.accent, w: 2.2}], hl: [{y: 15, c: C.muted}], txt: [{x: 29.5, y: 29, t: "dashed: ZN gains", a: "end"}]});
+  const mz = metrics(zn.y, zn.u), dj = (m.J - mz.J) / mz.J * 100;
+  $("k2cmp").style.background = dj < -1 ? "#e3f2e9" : dj > 1 ? "#f9e3e0" : "#f1f5fa"; $("k2cmp").style.borderLeftColor = dj < -1 ? C.good : dj > 1 ? C.bad : C.accent;
+  $("k2cmp").innerHTML = Math.abs(dj) <= 1 ? `<b>Same ITAE as ZN</b> (${f0(mz.J)} cm s²).` : `<b>${Math.abs(dj).toFixed(0)}% ${dj < 0 ? "lower (better)" : "higher (worse)"} ITAE than ZN</b>: ${f0(m.J)} against ${f0(mz.J)} cm s². Actuator TV: ${f0(m.tv)} against ${f0(mz.tv)} PWM.`;
+  $("k2").innerHTML = [["ITAE", f0(m.J), "cm s²"], ["Overshoot", f0(m.os), "%"], ["Settling ±2 cm", m.ts.toFixed(1), "s"], ["Actuator TV", f0(m.tv), "PWM"]].map(v => `<div><span>${v[0]}</span><b>${v[1]}</b><span>${v[2]}</span></div>`).join("");
+  const n = +$("h2n").value, g = +$("h2g").value, r = +$("h2r").value;
+  $("c2").textContent = `GA evaluations  = Np·(G+1) = ${n}·${g + 1} = ${n * (g + 1)}\nModel simulations = evaluations · noise realisations\n                  = ${n * (g + 1)}·${r} = ${n * (g + 1) * r}\nEach evaluation averages ITAE over ${r} noisy simulations.`;
+}
+["k2p", "k2i", "k2d", "h2n", "h2g", "h2r"].forEach(id => $(id).oninput = draw2);
+$("b2zn").onclick = () => setK2(ZN); $("b2ga").onclick = () => setK2(HOST);
+const X2 = [
+  ["1 · Only P", [2.62, 0, 0], "<b>Proportional control only.</b> The ball <b>does not even leave the bottom</b>. With P alone the fan command is u = K<sub>p</sub>·e ≈ 2.6 × 16 ≈ 42 PWM, far below the ≈ 110 PWM needed to float the ball. P would need a permanent error to produce that airflow: this is the steady-state offset. The ITAE is huge because the error lasts the whole trial."],
+  ["2 · Add I", [2.62, 3.04, 0], "<b>P + I.</b> The integral term keeps accumulating the error, so the fan command grows until the ball lifts. But the ball is slow to respond and nothing damps it: the integral overshoots, the ball <b>oscillates with growing amplitude and hits the top</b>. Without damping, this loop is unstable."],
+  ["3 · Add D (= ZN)", [2.62, 3.04, 0.56], "<b>P + I + D: the Ziegler–Nichols gains of Stage 1.</b> The derivative term reacts to the speed of the ball and damps the oscillation: the ball now settles at 15 cm with about 25% overshoot. This is the reference that the GA must beat."],
+  ["4 · Larger Kp", [5.0, 3.04, 0.56], "<b>Larger K<sub>p</sub> (5.0 instead of 2.62).</b> In this model the response is faster, with less overshoot and a lower ITAE than ZN. Look at the actuator TV: the fan works harder. A GA that minimises ITAE alone does not see this cost, which is why TV is reported separately."],
+  ["5 · Host-GA gains", HOST, "<b>Gains found by a GA on a PC with this model.</b> They give a lower simulated ITAE than ZN, with K<sub>d</sub> at the upper bound of the search box. Check the actuator TV: on the real rig these gains made the fan work 61% harder than the on-chip GA, which the noise-free model cannot show."]];
+$("x2btns").innerHTML = X2.map((x, i) => `<button class="b" data-x="${i}">${x[0]}</button>`).join("");
+$("x2btns").onclick = e => { const i = e.target.dataset.x; if (i === undefined) return; setK2(X2[i][1]); $("x2txt").innerHTML = X2[i][2]; [...$("x2btns").children].forEach((b, j) => b.classList.toggle("p", j == i)); play2(); };
+$("x2txt").innerHTML = "Press experiment 1 to start. Each button sets the gains, plays the response on the rig drawing and explains what to observe.";
+function play2() { const k = [+$("k2p").value, +$("k2i").value, +$("k2d").value], s = simulate(k); animate("s2", {plant: $("plt2"), plots: [$("p2sim")], y: s.y, u: s.u, btn: $("a2play"), readout: $("a2r"), restart: play2}); }
+$("a2play").onclick = play2;
+
+/* ====================== STAGE 3 ====================== */
+let s3 = {run: 0, step: 0, seed: 7};
+function rng(seed) { let a = seed >>> 0; return () => { a = (a * 1664525 + 1013904223) >>> 0; return a / 4294967296; }; }
+const gene = k => k.map((v, j) => Math.round(v / UB[j] * Q));
+const hex = g => "0x" + g.toString(16).toUpperCase().padStart(4, "0");
+function draw3() {
+  const R = D.reps[s3.run], pop = R.trials.filter(t => t.g === 0).slice(0, 8);
+  $("r3").textContent = s3.run + 1;
+  const r = rng(s3.seed), pick = () => Math.floor(r() * pop.length);
+  const t1 = [pick(), pick()], t2 = [pick(), pick()];
+  const win = p => pop[p[0]].J <= pop[p[1]].J ? p[0] : p[1];
+  const a = win(t1), b = win(t2), alpha = Math.floor(r() * 257), sig = Math.floor(6554 * (5 + 1 - 1) / 5);
+  const ga = gene(pop[a].k), gb = gene(pop[b].k);
+  const c = ga.map((v, j) => Math.floor((alpha * v + (256 - alpha) * gb[j]) / 256));
+  const B = [0, 1, 2].map(() => r() < 1 / 3), Dm = [0, 1, 2].map(() => Math.floor(r() * (2 * sig + 1)) - sig);
+  const g2 = c.map((v, j) => Math.min(Q, Math.max(0, v + (B[j] ? Dm[j] : 0))));
+  const k2 = g2.map((v, j) => UB[j] * v / Q);
+  const elite = pop.reduce((m, p, i) => p.J < pop[m].J ? i : m, 0);
+  const hi = [[], [...t1], [...t2], [a, b], [a, b], [a, b]][s3.step];
+  $("t3").innerHTML = `<tr><th>#</th><th>g(Kp)</th><th>g(Ki)</th><th>g(Kd)</th><th>Kp</th><th>Ki</th><th>Kd</th><th>ITAE</th><th></th></tr>` +
+    pop.map((p, i) => { const g = gene(p.k); return `<tr class="${hi.includes(i) ? "sel" : ""} ${i === elite ? "win" : ""}"><td>${i + 1}</td>${g.map(v => `<td class="mono">${hex(v)}</td>`).join("")}${p.k.map(v => `<td>${f2(v)}</td>`).join("")}<td>${p.x ? `<span class="tag bad">${f0(p.J)} cap</span>` : f0(p.J)}</td><td>${i === elite ? '<span class="tag good">elite</span>' : ""}</td></tr>`; }).join("");
+  const steps = [
+    `Population of Np = 8 measured on the plant.\nIndividual ${elite + 1} has the lowest ITAE (${f0(pop[elite].J)} cm s²)\nand is copied unchanged as the elite.\nOnly Np − 1 = 7 offspring need new trials.\n\nPress “Next step” to build one offspring.`,
+    `Tournament 1: draw two individuals at random\n  #${t1[0] + 1} (ITAE ${f0(pop[t1[0]].J)})  vs  #${t1[1] + 1} (ITAE ${f0(pop[t1[1]].J)})\n  → parent a = #${a + 1} (lower ITAE wins)`,
+    `Tournament 2:\n  #${t2[0] + 1} (ITAE ${f0(pop[t2[0]].J)})  vs  #${t2[1] + 1} (ITAE ${f0(pop[t2[1]].J)})\n  → parent b = #${b + 1}`,
+    `Integer crossover, shared weight α = ${alpha} of A = 256\n c = ⌊(α·g_a + (256−α)·g_b)/256⌋\n` + ["Kp", "Ki", "Kd"].map((n, j) => ` ${n}: ⌊(${alpha}·${ga[j]} + ${256 - alpha}·${gb[j]})/256⌋ = ${c[j]}`).join("\n") + `\nA weighted average of two values in [0, 65535]\nstays in [0, 65535]: the gain bounds hold.`,
+    `Mutation, probability 1/3 per gene,\nhalf-width σ₁ = ⌊6554·(G+1−q)/G⌋ = ${sig} (q = 1)\n` + ["Kp", "Ki", "Kd"].map((n, j) => ` ${n}: ${B[j] ? `mutate by ${Dm[j] >= 0 ? "+" : ""}${Dm[j]} → clip → ${g2[j]}` : `no mutation → ${g2[j]}`}`).join("\n") + `\nσ shrinks each generation: wide search first,\nfine adjustment later.`,
+    `Decode θ = θ̄·g/65535:\n` + ["Kp", "Ki", "Kd"].map((n, j) => ` ${n} = ${UB[j]}·${g2[j]}/65535 = ${k2[j].toFixed(3)}`).join("\n") + `\n\nThis offspring now gets one 35-s trial on the rig.\nRepeat 7× per generation, for G = 5 generations.`];
+  $("c3").textContent = steps[s3.step]; $("s3step").textContent = `step ${s3.step + 1} of 6 · draw seed ${s3.seed}`;
+  const n = +$("n3").value, G = +$("g3").value, na = Math.max(10, n), ram = 2 * na * 3 * 2 + 4 * na, ne = n + G * (n - 1) + 1;
+  $("c3b").textContent = `n_eval = Np + G·(Np−1) + 1 = ${n} + ${G}·${n - 1} + 1 = ${ne} trials\nRAM = 2 buffers·${na} individuals·3 genes·2 B + ${na}·4 B = ${ram} B\nNominal time ≤ ${ne}·35 s = ${(ne * 35 / 60).toFixed(0)} min (interruptions shorten it)`;
+  $("ram3").style.width = (ram / 2048 * 100) + "%"; $("ram3t").textContent = `${ram} / 2048 B`;
+  const us = D.reps.flatMap(r => r.gens.map(g => g.us)), fr = Math.min(...D.reps.flatMap(r => r.gens.map(g => g.ram)));
+  $("k3").innerHTML = [["GA time / generation", (mean(us) / 1000).toFixed(1), "ms (mean of 50)"], ["Min free RAM", fr, "B"], ["Trials per tuning", "43 + 1", "search + confirm"], ["Firmware", "18.0", "of 30.7 KB"]].map(v => `<div><span>${v[0]}</span><b>${v[1]}</b><span>${v[2]}</span></div>`).join("");
+}
+$("b3next").onclick = () => { s3.step = Math.min(5, s3.step + 1); draw3(); };
+$("b3prev").onclick = () => { s3.step = Math.max(0, s3.step - 1); draw3(); };
+$("b3new").onclick = () => { s3.seed = Math.floor(Math.random() * 1000); s3.step = 0; draw3(); };
+["n3", "g3"].forEach(id => $(id).oninput = draw3);
+
+/* ====================== STAGE 4 ====================== */
+let s4 = {run: 5, tr: 44, timer: null};
+$("run4").innerHTML = D.reps.map((r, i) => `<option value="${i}">Run ${i + 1} (session ${r.session})</option>`).join("");
+let lastReplayReportRun = -1;
+$("run4").onchange = e => { s4.run = +e.target.value; draw4(); };
+$("tr4").oninput = e => { s4.tr = +e.target.value; draw4(); };
+$("pl4").onclick = () => {
+  const NT = D.reps[s4.run].trials.length + 1;
+  if (s4.timer) { clearInterval(s4.timer); s4.timer = null; $("pl4").textContent = "▶ Play the search (trial by trial)"; return; }
+  if (s4.tr >= NT) s4.tr = 0; $("pl4").textContent = "❚❚ Pause the search";
+  s4.timer = setInterval(() => { s4.tr++; draw4(); if (s4.tr >= NT) $("pl4").click(); }, 450);
+};
+function draw4() {
+  const R = D.reps[s4.run], zn = ZNMEAN[R.session], tr = R.trials, NS = tr.length, NT = NS + 1, sp = R.sp || 15, n = Math.max(1, Math.min(s4.tr, NT));
+  $("run4").value = s4.run; $("tr4").max = NT; $("tr4").value = n;
+  const isConf = n === NT, cur = isConf ? R.conf : tr[n - 1];
+  const prev = tr.slice(0, isConf ? NS : n - 1).filter(t => !t.x).map(t => t.J), Jb = prev.length ? Math.min(...prev) : null;
+  $("tr4v").textContent = isConf ? "confirmation" : `${n} / ${NS} · gen ${cur.g}`;
+  $("st4").innerHTML = isConf ? `<span class="tag">winner re-run without cap · ITAE ${f0(cur.J)}</span>` : (cur.x ? `<span class="tag bad">interrupted · fitness = λJb = ${f0(cur.J)}</span>` : `<span class="tag good">completed · ITAE ${f0(cur.J)}</span>`);
+  const y = cur.y.slice(1), S = runningCost(cur.y, sp).slice(1);
+  if (ANIMS.s4) { clearTimeout(ANIMS.s4.raf); $("a4play").textContent = "▶ Play session: animate the selected trial"; $("a4play").onclick = play4; }
+  plant($("plt4"), y[10], 0, sp, 0); s4.cur = {y, u: (cur.u || []).slice(1), S, sp};
+  plot($("p4y"), {x: [0, 30], y: [0, 32], yl: "h (cm)", m: {b: 18}, lines: [{y, dx: T, c: cur.x ? C.bad : C.accent, w: 2}], hl: [{y: sp, c: C.muted}]});
+  const cap = (Jb && !isConf) ? 2 * Jb : null, ymax = Math.max(cap || 0, S.at(-1) || 0, 100) * 1.1;
+  plot($("p4s"), {x: [0, 30], y: [0, ymax], xl: "Time (s)", yl: "S (cm s²)", m: {t: 6}, lines: [{y: S, dx: T, c: C.accent, w: 2}], hl: cap ? [{y: cap, c: C.bad, t: `cap 2·Jb = ${f0(cap)}`}] : []});
+  const seen = tr.slice(0, isConf ? NS : n), done = seen.filter(t => !t.x), jmin = 120, jmax = 900;
+  const shade = J => { const z = Math.max(0, Math.min(1, (Math.log(J) - Math.log(jmin)) / (Math.log(jmax) - Math.log(jmin)))); const c0 = [28, 85, 145], c1 = [184, 205, 228]; return `rgb(${c0.map((v, i) => Math.round(v + (c1[i] - v) * z)).join(",")})`; };
+  const pts = seen.filter(t => t.x).map(t => ({x: t.k[0], y: t.k[1], k: "x", c: C.bad, r: 4})).concat(done.map(t => ({x: t.k[0], y: t.k[1], c: shade(t.J), r: 5})));
+  pts.push({x: ZN[0], y: ZN[1], c: "#fff", s: C.ink2, sw: 1.5, r: 5, t: "ZN"});
+  pts.push({x: cur.k[0], y: cur.k[1], k: "d", c: isConf ? C.good : C.accent2});
+  plot($("p4k"), {x: [0, 5.3], y: [0, 6.2], xl: "Kp", yl: "Ki", pts});
+  const best = []; let b = Infinity; tr.forEach(t => { if (!t.x) b = Math.min(b, t.J); best.push(b / zn); });
+  const show = best.slice(0, isConf ? NS : n).map(v => isFinite(v) ? v : null).filter(v => v !== null), off = best.slice(0, isConf ? NS : n).length - show.length;
+  const top = Math.max(3.5, R.conf.J / zn * 1.15, ...(show.length ? [show[0] * 1.1] : []));
+  const g0 = [...new Set(tr.map(t => t.g))].filter(g => g > 0).map(g => ({g, i: tr.findIndex(t => t.g === g) + 1}));
+  const step = Math.max(1, Math.round(NS / 6)), xt = []; for (let v = 1; v <= NS; v += step) xt.push(v);
+  plot($("p4b"), {x: [0, NS + 3], y: [0, top], xl: "Search trial", yl: "Cost / ZN mean", m: {l: 50}, xt,
+    lines: show.length ? [{x: show.map((_, i) => i + 1 + off), y: show, c: C.accent, w: 2.2}] : [], pts: [{x: NS + 2, y: R.conf.J / zn, c: isConf ? C.good : C.grey, r: 6}],
+    hl: [{y: 1, c: C.ink2}, {y: HOSTMEAN[R.session] / zn, c: C.accent2, dash: "2 3"}],
+    txt: g0.map(o => ({x: o.i + 0.5, y: top * 0.92, t: `gen ${o.g}`, c: C.muted})).concat([{x: NS + 1.2, y: R.conf.J / zn, t: `confirmed ${(R.conf.J / zn).toFixed(2)}`, a: "end", c: C.good}, {x: 0.6, y: 1.08, t: "ZN mean", c: C.ink2}, {x: 0.6, y: HOSTMEAN[R.session] / zn - 0.22, t: "host-GA mean", c: C.accent2}],
+      show.length ? [{x: NS, y: show.at(-1) + 0.12, t: `best stored ${show.at(-1).toFixed(2)}`, a: "end", c: C.accent}] : [])});
+  if (lastReplayReportRun !== s4.run) { lastReplayReportRun = s4.run; renderReplayReport(); }
+}
+
+function play4() { const c = s4.cur; if (!c || s4.timer) { $("a4note").style.color = C.bad; return; } $("a4note").style.color = ""; animate("s4", {plant: $("plt4"), plots: [$("p4y"), $("p4s")], y: c.y, u: c.u.length ? c.u : c.y.map(() => 0), sp: c.sp, btn: $("a4play"), readout: $("a4r"), restart: play4, extra: i => `   running cost ${f0(c.S[i] || 0)}`}); }
+$("a4play").onclick = play4;
+
+/* ====================== STAGE 5 ====================== */
+let s5 = 0;
+$("ex5").innerHTML = D.retune.map((_, i) => `<option value="${i}">Experiment ${i + 1}</option>`).join("");
+$("ex5").onchange = e => { s5 = +e.target.value; s5n = 1; draw5(); };
+$("g5").oninput = draw5;
+let s5n = 1;
+function draw5() {
+  $("ex5").value = s5;
+  const E = D.retune[s5], g = +$("g5").value, ops = E.ops, ref = ops[0].Jn, thr = g * ref, ch = E.trig; $("g5v").textContent = g.toFixed(2);
+  const N = ops.length; s5n = Math.max(1, Math.min(N, s5n));
+  const lo = Math.max(1, ...ops.slice(1, ch).map(o => o.Jn / ref)), hi = ops[ch].Jn / ref;
+  const fire = ops.map((o, i) => i > 0 && i <= ch && o.Jn > thr), first = fire.indexOf(true);
+  const verdict = first < 0 ? "miss" : first < ch ? "false" : "ok";
+  const col = (o, i) => i === 0 ? C.grey : (first >= 0 && i > first && i <= ch) ? "#d5d9df" : i < ch ? (o.Jn > thr ? C.bad : C.grey) : i === ch ? (o.Jn > thr ? C.good : C.accent2) : "#b8cde4";
+  const bars = ops.slice(0, s5n).map((o, i) => ({x: i + 1, y: o.Jn, c: col(o, i), t: o.Jn.toFixed(1)}));
+  const top = Math.max(...ops.map(o => o.Jn), thr) * 1.22;
+  plot($("p5"), {x: [0.3, N + 0.7], y: [0, top], xl: "Episode (30 s each)", yl: "episode cost Jn", xt: ops.map((_, i) => i + 1), bars, hl: [{y: thr, c: C.bad}],
+    txt: [{x: 0.4, y: Math.max(thr, ...ops.slice(0, ch).map(o => o.Jn)) + top * 0.09, t: `alarm level = γ × Jref = ${g.toFixed(2)} × ${ref.toFixed(1)} = ${thr.toFixed(1)}`, c: C.bad}, {x: 0.5, y: top * 0.93, t: "ball at 15 cm", c: C.ink2}, {x: ch + 0.62, y: top * 0.93, t: "setpoint moved to 24 cm →", c: C.ink2}]});
+  const S = $("p5").__s; $("p5").insertAdjacentHTML("beforeend", `<line x1="${S.sx(ch + 0.5)}" x2="${S.sx(ch + 0.5)}" y1="${S.m.t}" y2="${S.H - S.m.b}" stroke="${C.ink2}" stroke-dasharray="5 4"/>`);
+  // narrative for the latest revealed episode
+  const k = s5n - 1, o = ops[k], above = o.Jn > thr;
+  let t = `<b>Episode ${k + 1}</b> (setpoint ${o.r} cm): cost J<sub>n</sub> = <b>${o.Jn.toFixed(1)}</b>, alarm level = <b>${thr.toFixed(1)}</b>. `;
+  if (k === 0) t += "This first episode is the reference J<sub>ref</sub>: it tells the Arduino what a normal episode with good gains costs.";
+  else if (k > ch) t += `On the real rig the firmware (γ = 1.5) had already retuned, so these episodes use the <b>new gains</b>: the cost drops from ${ops[ch].Jn.toFixed(1)} to ${o.Jn.toFixed(1)}.`;
+  else if (first >= 0 && k > first) t += `Your alarm already fired at episode ${first + 1}, so the Arduino is busy with a new tuning.`;
+  else if (k < ch) t += above ? `<b style="color:${C.bad}">The cost is above the alarm level → alarm!</b> But nothing has changed: the ball is still at 15 cm and the difference is just noise. This is a <b>false alarm</b>; a 25-min tuning starts for nothing. Increase γ.` : `The cost is below the alarm level → <b>no alarm</b>, the Arduino keeps the current gains. Correct: nothing has changed.`;
+  else t += above ? `<b style="color:${C.good}">The cost jumped above the alarm level → alarm!</b> The Arduino starts a new GA tuning for the new setpoint. Correct.` : `<b style="color:${C.accent2}">The cost jumped, but it is still below your alarm level → no alarm.</b> The change is <b>missed</b> and the old gains stay in use at 24 cm. Decrease γ.`;
+  if (k < N - 1) t += `<br><span class="hint">Press <b>Next episode</b>.</span>`;
+  $("e5").innerHTML = t;
+  const v = $("v5"), done = s5n > ch;
+  v.style.borderLeftColor = !done ? C.accent : verdict === "ok" ? C.good : C.bad; v.style.background = !done ? "#f1f5fa" : verdict === "ok" ? "#e3f2e9" : "#f9e3e0";
+  v.innerHTML = !done ? `Step to episode ${ch + 1} to see whether your γ = ${g.toFixed(2)} works.` :
+    (verdict === "ok" ? `<b style="color:${C.good}">✓ γ = ${g.toFixed(2)} works:</b> no false alarm, and the alarm fires at the change.` :
+     verdict === "false" ? `<b style="color:${C.bad}">✗ γ = ${g.toFixed(2)} is too small:</b> false alarm at episode ${first + 1}.` :
+     `<b style="color:${C.accent2}">✗ γ = ${g.toFixed(2)} is too large:</b> the change is missed.`) +
+    `<br>In this experiment any γ between <b>${lo.toFixed(2)}</b> and <b>${hi.toFixed(2)}</b> works. Try the other experiments: is there one γ that works for all three?`;
+  $("c5").textContent = `Jref = cost of episode 1 = ${ref.toFixed(2)}\nalarm level = γ·Jref = ${thr.toFixed(2)}\n\n` +
+    ops.slice(0, Math.min(s5n, ch + 1)).map((o, i) => `ep ${i + 1}  r=${o.r}  Jn=${o.Jn.toFixed(1).padStart(5)}  ${i === 0 ? "reference" : first >= 0 && i > first ? "(already retuning)" : o.Jn > thr ? (i < ch ? "ALARM (false)" : "ALARM (correct)") : (i < ch ? "no alarm" : "no alarm (missed)")}`).join("\n");
+}
+$("n5").onclick = () => { s5n++; draw5(); };
+$("r5").onclick = () => { s5n = 1; draw5(); };
+$("a5").onclick = () => { s5n = 99; draw5(); };
+
+
+/* ====================== LIVE RIG (Web Serial) ====================== */
+/* Protocol = firmware/src/main.cpp: READY..START, MODE:BALL, SP, LIM, KP:..,KI:..,KD:.., BOUNDS, SEED,
+   RUN:n, RELAY:hi,lo,h,n, TUNE:pop,gens,seed,stream, AUTO:sa,na,sb,nb,thr,pop,gens, STOP, RAM?.
+   Rows "T:..,SP:..,PV:..,OUT:..,ERR:.." ; events EV/GEN/TDONE/OP/TRIG/TIME ; DONE ends a run.          */
+const LV = {tr: null, connected: false, demo: false, speed: 1, busy: false, waiters: [], kind: null,
+  rows: [], events: [], ep: 0, epRows: {}, trials: [], gens: [], conf: null, ops: [], trig: null, t0: 0, lastK: null, znJ: null};
+const ZNREF = D.baselines.A.ZN.y[0].map((_, i) => mean(D.baselines.A.ZN.y.map(v => v[i]))).slice(1);
+const lvSleep = ms => new Promise(r => setTimeout(r, ms / (LV.demo ? LV.speed : 1)));
+function lvLog(s) { const el = $("lvLog"); el.textContent += s + "\n"; if (el.textContent.length > 24000) el.textContent = el.textContent.slice(-16000); el.scrollTop = el.scrollHeight; }
+function lvStatus(s, cls) { const e = $("lvStatus"); e.textContent = s; e.className = "tag " + (cls || ""); }
+function lvPhase(s) { $("lvPhase").textContent = s; }
+function lvWait(pred, ms) {
+  return new Promise((res, rej) => {
+    const w = {pred, res}; LV.waiters.push(w);
+    if (ms) setTimeout(() => { const i = LV.waiters.indexOf(w); if (i >= 0) { LV.waiters.splice(i, 1); rej(new Error("no reply from board")); } }, ms);
+  });
+}
+function lvLine(line) {
+  if (line.startsWith("T:")) {
+    const f = Object.fromEntries(line.split(",").map(kv => kv.split(":")));
+    if (+f.T === 0) LV.ep++;
+    const r = {ep: LV.ep, t: +f.T, sp: +f.SP, y: +f.PV, u: +f.OUT, e: +f.ERR};
+    LV.rows.push(r); (LV.epRows[LV.ep] = LV.epRows[LV.ep] || []).push(r); lvSched();
+  } else {
+    const k = line.split(":")[0];
+    if (["EV", "GEN", "TDONE", "OP", "TRIG", "TIME"].includes(k)) {
+      const pl = line.slice(k.length + 1);
+      LV.events.push({wall_s: ((performance.now() - LV.t0) / 1000).toFixed(1), kind: k, payload: pl, episode: LV.ep});
+      lvEvent(k, pl.split(",").map(Number));
+    }
+    lvLog(line);
+  }
+  for (const w of LV.waiters) if (w.pred(line)) { LV.waiters.splice(LV.waiters.indexOf(w), 1); w.res(line); break; }
+}
+async function lvSend(c) { lvLog("> " + c); await LV.tr.write(c + "\n"); }
+async function lvCmd(c, ms = 5000) { const p = lvWait(l => l === "OK" || l.startsWith("ERR"), ms); await lvSend(c); const r = await p; if (r !== "OK") throw new Error(c + " → " + r); }
+
+async function lvConnect() {
+  if (!("serial" in navigator)) { lvStatus("Web Serial unavailable · open GeneTune.bat in Chrome or Edge", "bad"); return; }
+  try {
+    const port = await navigator.serial.requestPort();
+    await port.open({baudRate: 115200});
+    const dec = new TextDecoderStream(); port.readable.pipeTo(dec.writable).catch(() => {}); const reader = dec.readable.getReader();
+    const enc = new TextEncoderStream(); enc.readable.pipeTo(port.writable).catch(() => {}); const writer = enc.writable.getWriter();
+    LV.tr = {write: s => writer.write(s)};
+    const inf = port.getInfo(); $("lvInfo").textContent = inf.usbVendorId ? `USB ${inf.usbVendorId.toString(16)}:${inf.usbProductId.toString(16)}` : "";
+    (async () => {
+      let buf = "";
+      while (true) {
+        let r; try { r = await reader.read(); } catch (e) { break; }
+        if (r.done) break; buf += r.value; let i;
+        while ((i = buf.indexOf("\n")) >= 0) { const l = buf.slice(0, i).trim(); buf = buf.slice(i + 1); if (l) lvLine(l); }
+      }
+      LV.connected = false; lvStatus("Disconnected", "bad");
+    })();
+    await lvHandshake(false);
+  } catch (e) { lvStatus("Connection failed: " + e.message, "bad"); }
+}
+async function lvHandshake(demo) {
+  LV.demo = demo; lvStatus("Waiting for READY (the board resets when the port opens)…");
+  try { await lvWait(l => l === "READY", 8000); } catch (e) { lvLog("(no READY seen, sending START anyway)"); }
+  await lvCmd("START"); await lvCmd("MODE:BALL");
+  const p = lvWait(l => l.startsWith("PV:"), 3000); await lvSend("RAM?"); const ram = (await p).slice(3);
+  LV.connected = true; LV.znJ = null; lvStatus(demo ? `Emulator connected (${LV.speed}× speed)` : "Connected · ball mode", "good");
+  $("lvInfo").textContent += ` · free RAM ${ram} B`;
+  $("mode").textContent = demo ? "Live mode · firmware emulator" : "Live mode · Arduino connected";
+}
+function lvReset(kind) { Object.assign(LV, {kind, rows: [], events: [], ep: 0, epRows: {}, trials: [], gens: [], conf: null, ops: [], trig: null, t0: performance.now(), reportSource: LV.demo ? "emulator" : "rig", runMetrics: null, relayMetrics: null}); $("lvLog").textContent = ""; $("lvReport").hidden = true; }
+async function lvGo() {
+  if (!LV.connected) { lvStatus("Connect to the Arduino (or the emulator) first", "bad"); return; }
+  if (LV.busy) return; LV.busy = true;
+  const kind = $("lvType").value, sp = +$("lvSp").value, k = [+$("lvKp").value, +$("lvKi").value, +$("lvKd").value];
+  const np = +$("lvNp").value, G = +$("lvG").value;
+  lvReset(kind); LV.config = {gains:k, setpoint:sp, population:np, generations:G, seed:+$("lvSeed").value}; LV.events.push({wall_s: "0.0", kind: "CFG", payload: `${kind},${k.join(",")},${sp},${np},${G},${$("lvSeed").value},${LV.demo ? "emulator" : "rig"}`, episode: 0}); $("lvRes").textContent = "Running…"; $("lvTuneCard").style.display = (kind === "tune" || kind === "auto") ? "" : "none";
+  try {
+    await lvCmd("STOP"); lvPhase("settling · fan off 5 s"); await lvSleep(5000);
+    await lvCmd("SP:" + sp); await lvCmd("LIM:0,255");
+    const done = () => lvWait(l => l === "DONE", 0);
+    if (kind === "run") {
+      await lvCmd(`KP:${k[0]},KI:${k[1]},KD:${k[2]}`); lvPhase("closed-loop step · 30 s"); const d = done(); await lvCmd("RUN:300"); await d;
+    } else if (kind === "relay") {
+      lvPhase("relay test · 40 s"); const d = done(); await lvCmd("RELAY:130,50,1,400"); await d;
+    } else {
+      await lvCmd("BOUNDS:" + $("lvB").value); await lvCmd("SEED:" + $("lvSeed").value);
+      if (kind === "tune") {
+        $("lvEta").textContent = `${np + G * (np - 1) + 1} trials planned`;
+        lvPhase("on-chip GA running"); const d = done(); await lvCmd(`TUNE:${np},${G},0,1`); await d;
+      } else {
+        await lvCmd(`KP:${k[0]},KI:${k[1]},KD:${k[2]}`); lvPhase("supervised operation"); const d = done();
+        await lvCmd(`AUTO:${sp},3,${+$("lvSpB").value},4,0.5,${np},${G}`); await d;
+      }
+    }
+    lvPhase("finished"); lvFinish();
+  } catch (e) { lvPhase("error: " + e.message); } finally { LV.busy = false; }
+}
+async function lvStop() { if (LV.tr) { await lvSend("STOP"); lvPhase("stop sent · fan off"); } }
+function lvEvent(k, p) {
+  const er = LV.epRows[LV.ep] || [];
+  if (k === "EV") {
+    LV.trials.push({g: p[0], i: p[1], k: [p[2], p[3], p[4]], J: p[5], x: p[6], y: er.map(r => r.y), u: er.map(r => r.u)});
+    const n = +$("lvNp").value + +$("lvG").value * (+$("lvNp").value - 1);
+    $("lvEta").textContent = `trial ${LV.trials.length} of ${n} + confirmation · last ITAE ${f0(p[5])}${p[6] ? " (interrupted)" : ""}`;
+  } else if (k === "GEN") LV.gens.push({g: p[0], best: p[1], k: [p[2], p[3], p[4]], us: p[5], ram: p[6]});
+  else if (k === "TDONE") { LV.conf = {k: [p[0], p[1], p[2]], J: p[3], revert: p[4], y: er.map(r => r.y), u: er.map(r => r.u)}; LV.lastK = LV.conf.k; }
+  else if (k === "OP") LV.ops.push({n: p[0], r: p[1], J: p[2], Jn: p[3], x: p[4]});
+  else if (k === "TRIG") LV.trig = p[0];
+  lvSched();
+}
+let lvPend = false;
+function lvSched() { if (!lvPend) { lvPend = true; requestAnimationFrame(() => { lvPend = false; drawLive(); }); } }
+function metricsR(y, u, r) {
+  const J = runningCost(y, r).at(-1), step = Math.max(1, Math.abs((y[3] ?? y[0]) - r));
+  const os = Math.max(0, (r - Math.min(...y.slice(3))) / step * 100);
+  let tv = 0; for (let k = 4; k < u.length; k++) tv += Math.abs(u[k] - u[k - 1]);
+  let ts = 0; for (let k = y.length - 1; k >= 0; k--) if (Math.abs(y[k] - r) > 2) { ts = (k + 1) * T; break; }
+  return {J, os, tv, ts};
+}
+const kpiHTML = m => [["ITAE", f0(m.J), "cm s²"], ["Overshoot", f0(m.os), "% of step"], ["Settling ±2 cm", m.ts.toFixed(1), "s"], ["Actuator TV", f0(m.tv), "PWM"]].map(v => `<div><span>${v[0]}</span><b>${v[1]}</b><span>${v[2]}</span></div>`).join("");
+function drawLive() {
+  const er = LV.epRows[LV.ep] || [], sp = er.length ? er[0].sp : +$("lvSp").value, relay = LV.kind === "relay";
+  const lines = [];
+  if (!relay && Math.abs(sp - 15) < 1e-6) lines.push({y: ZNREF, dx: T, c: C.grey, w: 1.4, dash: "4 3"});
+  lines.push({y: er.map(r => r.u / 10), dx: T, c: C.accent2, w: 1.2}, {y: er.map(r => r.y), dx: T, c: C.accent, w: 2});
+  plot($("lvPlot"), {x: [0, relay ? 40 : 30], y: [0, 32], xl: `Time (s) · episode ${LV.ep}`, yl: "cm", lines, hl: [{y: sp, c: C.muted}]});
+  const lr = er.at(-1); LV.ang = ((LV.ang || 0) + 25 + (lr ? lr.u : 0) / 4) % 360;
+  plant($("pltL"), lr ? lr.y : 31, lr ? lr.u : 0, sp || 15, LV.ang); if (lr) cursor($("lvPlot"), (er.length - 1) * T);
+  if (er.length > 10 && !relay) $("lvKpi").innerHTML = kpiHTML(metricsR(er.map(r => r.y), er.map(r => r.u), sp));
+  if (LV.kind === "tune" || LV.kind === "auto") {
+    const done = LV.trials.filter(t => !t.x);
+    const pts = LV.trials.filter(t => t.x).map(t => ({x: t.k[0], y: t.k[1], k: "x", c: C.bad, r: 4}))
+      .concat(done.map(t => ({x: t.k[0], y: t.k[1], c: C.accent, r: 5, o: 0.6})));
+    if (LV.conf) pts.push({x: LV.conf.k[0], y: LV.conf.k[1], k: "d", c: C.good, t: "confirmed"});
+    const ub = $("lvB").value.split(",").map(Number);
+    plot($("lvK"), {x: [0, ub[0] * 1.02], y: [0, ub[1] * 1.02], xl: "Kp", yl: "Ki", pts});
+    const best = []; let b = Infinity; LV.trials.forEach(t => { if (!t.x) b = Math.min(b, t.J); best.push(b); });
+    const ymax = Math.max(100, ...(LV.conf ? [LV.conf.J] : []), ...best.filter(isFinite)) * 1.15;
+    plot($("lvBest"), {x: [0, Math.max(10, LV.trials.length + 2)], y: [0, ymax], xl: "Search trial", yl: "ITAE (cm s²)",
+      lines: [{x: best.map((_, i) => i + 1), y: best.map(v => isFinite(v) ? v : ymax), c: C.accent, w: 2}],
+      pts: LV.conf ? [{x: LV.trials.length + 1, y: LV.conf.J, c: C.good, r: 6, t: `confirmed ${f0(LV.conf.J)}`}] : []});
+  }
+}
+function lvFinish() {
+  const er = LV.epRows[LV.ep] || [], y = er.map(r => r.y), u = er.map(r => r.u), sp = er.length ? er[0].sp : 15;
+  let s = "";
+  if (LV.kind === "run" && !y.length) { $("lvRes").textContent = "No completed step data were recorded."; $("lvReport").hidden = true; return; }
+  if (LV.kind === "relay" && !y.length) { $("lvRes").textContent = "No relay data were recorded."; $("lvReport").hidden = true; return; }
+  if (LV.kind === "run") {
+    const m = metricsR(y, u, sp), k = [+$("lvKp").value, +$("lvKi").value, +$("lvKd").value];
+    LV.runMetrics = m; LV.runGains = k;
+    const isZN = k.every((v, j) => Math.abs(v - ZN[j]) < 0.02); if (isZN) LV.znJ = m.J;
+    s = `Gains (${k.map(f2).join(", ")}) at r = ${sp} cm\nITAE ${f0(m.J)} cm s² · overshoot ${f0(m.os)}% · settling ${m.ts.toFixed(1)} s · TV ${f0(m.tv)}\n` +
+      (sp === 15 ? `Reference ZN mean in the data set: ${f0(ZNMEAN.A)} (session A), ${f0(ZNMEAN.B)} (session B) cm s²` : "");
+  } else if (LV.kind === "relay") {
+    const z = er.filter(r => r.t >= 10).map(r => r.y), mu = mean(z), a = (Math.max(...z) - Math.min(...z)) / 2, up = [];
+    for (let i = 1; i < z.length; i++) if (z[i - 1] < mu && z[i] >= mu) up.push(i * T);
+    const Pu = up.length > 1 ? (up.at(-1) - up[0]) / (up.length - 1) : NaN, Ku = 4 * 40 / (Math.PI * a);
+    const kp = 0.6 * Ku, ki = kp / (Pu / 2), kd = kp * Pu / 8;
+    LV.relayMetrics = {Ku, Pu, Kp:kp, Ki:ki, Kd:kd};
+    s = `Oscillation after 10 s: amplitude a = ${a.toFixed(2)} cm, period Pu = ${Pu.toFixed(2)} s (${up.length} cycles)\nKu = 4d/(πa) = ${Ku.toFixed(2)} with d = 40 PWM\nZN gains: Kp ${kp.toFixed(2)}, Ki ${ki.toFixed(2)}, Kd ${kd.toFixed(2)}\nReference data set: Ku 4.37, Pu 1.72 s`;
+    if (isFinite(Pu)) { $("a1").value = a.toFixed(2); $("pu1").value = Pu.toFixed(2); LV.lastK = [kp, ki, kd]; }
+  } else if (LV.kind === "tune") {
+    const nx = LV.trials.filter(t => t.x).length;
+    s = `${LV.trials.length} search trials, ${nx} interrupted by the cost cap\n` + (LV.conf ? `Confirmed gains (${LV.conf.k.map(f2).join(", ")}), confirmed ITAE ${f0(LV.conf.J)} cm s²\n` : "No confirmation received\n") +
+      (LV.gens.length ? `GA time per generation ${(mean(LV.gens.map(g => g.us)) / 1000).toFixed(1)} ms · min free RAM ${Math.min(...LV.gens.map(g => g.ram))} B` : "");
+  } else {
+    s = LV.ops.map(o => `episode ${o.n + 1} r=${o.r} ITAE ${f0(o.J)} Jn ${o.Jn.toFixed(2)}${LV.trig === o.n ? "  → TRIGGER" : ""}`).join("\n") + (LV.conf ? `\nRetuned gains (${LV.conf.k.map(f2).join(", ")})` : "");
+  }
+  $("lvRes").textContent = s; drawLive(); renderLiveReport();
+}
+function lvCsv() {
+  if (!LV.rows.length) return;
+  const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-"), dl = (name, txt) => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([txt], {type: "text/csv"})); a.download = name; a.click(); };
+  dl(`genetune_${LV.kind}_${stamp}_rows.csv`, "episode,time,setpoint,process_var,output,error\n" + LV.rows.map(r => [r.ep, r.t, r.sp, r.y, r.u, r.e].join(",")).join("\n"));
+  dl(`genetune_${LV.kind}_${stamp}_events.csv`, "wall_s,kind,payload,episode\n" + LV.events.map(e => `${e.wall_s},${e.kind},"${e.payload}",${e.episode}`).join("\n"));
+}
+function lvToReplay() {
+  if (LV.kind !== "tune" || !LV.conf || !LV.trials.length) { $("lvRes").textContent += "\n(Replay needs a completed on-chip tuning.)"; return; }
+  const sess = "Live" + (D.reps.filter(r => r.session.startsWith("Live")).length + 1);
+  ZNMEAN[sess] = LV.znJ || ZNMEAN.A; HOSTMEAN[sess] = HOSTMEAN.A;
+  D.reps.push({session: sess, sp: +$("lvSp").value, trials: LV.trials, gens: LV.gens, conf: LV.conf});
+  $("run4").innerHTML = D.reps.map((r, i) => `<option value="${i}">${r.session.startsWith("Live") ? r.session + " (new experiment)" : `Run ${i + 1} (session ${r.session})`}</option>`).join("");
+  s4.run = D.reps.length - 1; s4.tr = LV.trials.length + 1; go(3);
+}
+
+/* ---------- firmware emulator: same protocol, model of the rig (identified parameters, 1 cm noise) ---------- */
+class Emu {
+  constructor(onLine, speed) {
+    this.on = onLine; this.speed = speed; this.started = false; this.busy = false; this.halt = false;
+    this.sp = 15; this.k = [0, 0, 0]; this.kmax = [5.24, 6.08, 1.13]; this.r = rng(1);
+    this.timer = setInterval(() => { if (!this.started) this.emit("READY"); }, 500);
+    this.emit("READY");
+  }
+  emit(l) { setTimeout(() => this.on(l), 0); }
+  sleep(ms) { return new Promise(r => setTimeout(r, ms / this.speed)); }
+  gauss() { const u = Math.max(1e-9, this.r()), v = this.r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+  async write(s) { for (const l of s.split("\n")) if (l.trim()) this.cmd(l.trim()); }
+  cmd(c) {
+    if (this.busy) { if (c.includes("S")) this.halt = true; return; }
+    const ok = () => this.emit("OK"), a = c.split(":"), v = (a[1] || "").split(",").map(Number);
+    if (c === "START") { this.started = true; clearInterval(this.timer); return ok(); }
+    if (!this.started) return;
+    if (c === "STOP" || c.startsWith("MODE:") || c.startsWith("LIM:")) return ok();
+    if (c === "RAM?") return this.emit("PV:1003");
+    if (a[0] === "SP") { this.sp = v[0]; return ok(); }
+    if (a[0] === "KP") { const m = c.match(/KP:([-\d.]+),KI:([-\d.]+),KD:([-\d.]+)/); this.k = m.slice(1).map(Number); return ok(); }
+    if (a[0] === "BOUNDS") { this.kmax = v; return ok(); }
+    if (a[0] === "SEED") { this.r = rng(v[0] * 2654435761); return ok(); }
+    ok(); this.busy = true; this.halt = false;
+    const run = a[0] === "RUN" ? this.episode("pid", this.k, v[0], null) : a[0] === "RELAY" ? this.episode("relay", v, v[3], null)
+      : a[0] === "TUNE" ? this.tune(v[0], v[1], null) : a[0] === "AUTO" ? this.auto(...v) : null;
+    if (!run) { this.busy = false; return this.emit("ERR:unknown cmd"); }
+    run.then(() => { this.busy = false; if (a[0] === "TUNE") this.emit(`TIME:${this.tuneTime}`); if (a[0] !== "AUTO") this.emit("DONE"); });
+  }
+  async episode(kind, k, n, cap) {
+    let h = 31, x = 0, I = 0, ep = 0, on = true, S = 0; const buf = new Array(2).fill(0), y = [], hist = [];
+    for (let s = 0; s < n && !this.halt; s++) {
+      const hm = h + 0.3 * this.gauss(), e = hm - this.sp; let u;
+      if (kind === "relay") { if (on && e < -k[2]) on = false; if (!on && e > k[2]) on = true; u = on ? k[0] : k[1]; }
+      else {
+        const In = I + e; let w = k[0] * e + k[1] * T * In + k[2] * (e - ep) / T;
+        if ((w > 255 && e > 0) || (w < 0 && e < 0)) w = k[0] * e + k[1] * T * I + k[2] * (e - ep) / T; else I = In;
+        ep = e; u = Math.min(255, Math.max(0, w));
+      }
+      this.emit(`T:${(s * T).toFixed(2)},SP:${this.sp.toFixed(4)},PV:${hm.toFixed(4)},OUT:${u.toFixed(4)},ERR:${e.toFixed(4)}`);
+      y.push(hm);
+      if (s === 3) S += 6 * T * T * Math.abs(e); else if (s > 3) S += s * T * T * Math.abs(e);
+      if (cap && S > cap) return {J: cap, x: 1, y};
+      for (let j = 0; j < 5; j++) { buf.push(u); const ud = buf.shift(); x += 0.02 / MODEL.tau * (-x + (ud - MODEL.u0)); h += -MODEL.Kb * x * 0.02; if (h < 3 || h > 31) { h = Math.min(31, Math.max(3, h)); x = 0; } }
+      await this.sleep(100);
+    }
+    return {J: S, x: 0, y};
+  }
+  async trial(k, cap) { await this.sleep(5000); return this.episode("pid", k, 300, cap); }
+  async tune(n, G, inc) {
+    const t0 = performance.now(), dec = g => g.map((v, j) => this.kmax[j] * v / Q);
+    let pop = [], fit = [];
+    for (let i = 0; i < n && !this.halt; i++) {
+      const g = (i === 0 && inc) ? inc.map((v, j) => Math.min(Q, Math.round(v / this.kmax[j] * Q))) : [0, 1, 2].map(() => Math.floor(this.r() * (Q + 1)));
+      const best = fit.length ? Math.min(...fit) : 0;
+      const res = await this.trial(dec(g), best > 0 ? 2 * best : null);
+      pop.push(g); fit.push(res.J); const kk = dec(g);
+      this.emit(`EV:0,${i},${kk.map(v => v.toFixed(4)).join(",")},${res.J.toFixed(2)},${res.x},30.60`);
+    }
+    for (let q = 1; q <= G && !this.halt; q++) {
+      const el = fit.indexOf(Math.min(...fit)), sig = Math.floor(6554 * (G + 1 - q) / G), np = [pop[el]], nf = [fit[el]];
+      for (let i = 1; i < n && !this.halt; i++) {
+        const tour = () => { const p1 = Math.floor(this.r() * n), p2 = Math.floor(this.r() * n); return fit[p1] <= fit[p2] ? p1 : p2; };
+        const A = pop[tour()], B = pop[tour()], al = Math.floor(this.r() * 257);
+        const c = A.map((v, j) => { let w = Math.floor((al * v + (256 - al) * B[j]) / 256); if (this.r() < 1 / 3) w += Math.floor(this.r() * (2 * sig + 1)) - sig; return Math.min(Q, Math.max(0, w)); });
+        const res = await this.trial(dec(c), 2 * Math.min(...nf, ...fit));
+        np.push(c); nf.push(res.J);
+        this.emit(`EV:${q},${i},${dec(c).map(v => v.toFixed(4)).join(",")},${res.J.toFixed(2)},${res.x},30.60`);
+      }
+      pop = np; fit = nf; const b = fit.indexOf(Math.min(...fit));
+      this.emit(`GEN:${q},${fit[b].toFixed(2)},${dec(pop[b]).map(v => v.toFixed(4)).join(",")},6704,919`);
+    }
+    const kb = dec(pop[fit.indexOf(Math.min(...fit))]), cf = await this.trial(kb, null);
+    this.emit(`TDONE:${kb.map(v => v.toFixed(4)).join(",")},${cf.J.toFixed(2)},0`);
+    this.tuneTime = Math.round((performance.now() - t0) * this.speed / 1000);
+    return kb;
+  }
+  async auto(sa, na, sb, nb, thr, n, G) {
+    let ref = null;
+    for (let e = 0; e < na + nb && !this.halt; e++) {
+      this.sp = e < na ? sa : sb; const res = await this.trial(this.k, null), Jn = res.J / Math.max(Math.abs(res.y[3] - this.sp), 1);
+      this.emit(`OP:${e},${this.sp.toFixed(1)},${res.J.toFixed(2)},${Jn.toFixed(2)},0`);
+      if (ref === null) ref = Jn;
+      else if (Jn > (1 + thr) * ref) { this.emit(`TRIG:${e}`); this.k = await this.tune(n, G, this.k).then(k => k); ref = null; }
+    }
+    this.emit("DONE");
+  }
+}
+async function lvDemo() {
+  LV.speed = +(new URLSearchParams(location.hash.slice(1)).get("speed") || 20);
+  const emu = new Emu(lvLine, LV.speed); LV.tr = {write: s => emu.write(s)};
+  $("lvInfo").textContent = "emulated board";
+  await lvHandshake(true);
+}
+function draw6() { $("lvTuneCard").style.display = (LV.kind === "tune" || LV.kind === "auto") ? "" : "none"; drawLive(); }
+$("lvConnect").onclick = lvConnect; $("lvDemo").onclick = lvDemo; $("lvStop").onclick = lvStop; $("lvGo").onclick = lvGo;
+$("lvCsv").onclick = lvCsv; $("lvToReplay").onclick = lvToReplay;
+$("lvUseZN").onclick = () => { [$("lvKp").value, $("lvKi").value, $("lvKd").value] = ZN; };
+$("lvUseLive").onclick = () => { if (LV.lastK) [$("lvKp").value, $("lvKi").value, $("lvKd").value] = LV.lastK.map(v => v.toFixed(3)); };
+
+
+/* ---------- reopen a recorded live log (rows CSV + events CSV from "Download CSV") ---------- */
+function parseCsv(txt) {
+  const L = txt.trim().split(/\r?\n/), h = L[0].split(",");
+  return L.slice(1).map(l => { const m = l.match(/("([^"]*)"|[^,]*)(,|$)/g).map(x => x.replace(/,$/, "").replace(/^"|"$/g, "")); return Object.fromEntries(h.map((k, i) => [k, m[i]])); });
+}
+function lvLoadLog(name, rowsTxt, eventsTxt) {
+  const ev = eventsTxt ? parseCsv(eventsTxt) : [], cfg = ev.find(e => e.kind === "CFG");
+  const kind = cfg ? cfg.payload.split(",")[0] : (name.match(/genetune_([a-z]+)_/) || [, "run"])[1];
+  if (cfg) { const c = cfg.payload.split(","); [$("lvKp").value, $("lvKi").value, $("lvKd").value, $("lvSp").value, $("lvNp").value, $("lvG").value, $("lvSeed").value] = c.slice(1, 8); }
+  $("lvType").value = kind; lvReset(kind);
+  LV.config = cfg ? (() => { const c = cfg.payload.split(","); return {gains:c.slice(1,4).map(Number),setpoint:+c[4],population:+c[5],generations:+c[6],seed:+c[7]}; })() : null;
+  $("lvTuneCard").style.display = (kind === "tune" || kind === "auto") ? "" : "none";
+  const rows = parseCsv(rowsTxt), byEp = {};
+  rows.forEach(r => (byEp[r.episode] = byEp[r.episode] || []).push(r));
+  const evByEp = {}; ev.filter(e => e.kind !== "CFG").forEach(e => (evByEp[e.episode] = evByEp[e.episode] || []).push(e));
+  const eps = [...new Set([...Object.keys(byEp), ...Object.keys(evByEp)].map(Number))].sort((a, b) => a - b);
+  for (const e of eps) {
+    (byEp[e] || []).forEach(r => lvLine(`T:${r.time},SP:${r.setpoint},PV:${r.process_var},OUT:${r.output},ERR:${r.error}`));
+    (evByEp[e] || []).forEach(x => lvLine(`${x.kind}:${x.payload}`));
+  }
+  const src = cfg && cfg.payload.endsWith("emulator") ? "emulator" : "rig";
+  LV.reportSource = src; LV.znJ = null;
+  lvStatus(`Recorded log · ${src}`, "good"); $("lvInfo").textContent = `${name} · ${rows.length} samples, ${ev.length} event${ev.length === 1 ? "" : "s"}`;
+  $("mode").textContent = "Live mode · recorded log"; lvPhase("finished"); lvLog(`(log reopened from ${name})`); lvFinish();
+}
+$("lvOpen").onclick = () => $("lvFile").click();
+$("lvFile").onchange = async e => {
+  const fs = [...e.target.files], rf = fs.find(f => /rows/.test(f.name)) || fs[0], ef = fs.find(f => /events/.test(f.name));
+  if (!rf) return; lvLoadLog(rf.name, await rf.text(), ef ? await ef.text() : "");
+};
+
+/* ---------- student-facing learning reports ---------- */
+function reportValues(box) {
+  const values = {};
+  box.querySelectorAll("[data-question]").forEach(input => {
+    if (input.type === "radio") { if (input.checked) values[input.dataset.question] = input.value; }
+    else values[input.dataset.question] = input.value.trim();
+  });
+  return values;
+}
+function saveReport(report, type) {
+  const text = type === "json" ? JSON.stringify(report, null, 2) : GTReport.exportHtml(report);
+  const blob = new Blob([text], {type:type === "json" ? "application/json" : "text/html"});
+  const url = URL.createObjectURL(blob), link = document.createElement("a");
+  link.href = url; link.download = `genetune_learning_${report.mode}_${report.createdAt.replace(/[:.]/g, "-")}.${type}`;
+  document.body.appendChild(link); link.click(); link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
+}
+function mountReport(box, report) {
+  const E = GTReport.esc;
+  box.hidden = false;
+  box.innerHTML = `<h3>Learning report and questionnaire</h3><p class="hint">Generated from this experiment. Objective questions are checked here; written explanations are saved for discussion with your educator. The JSON export also contains the final episode trajectory for later analysis.</p>` +
+    `<div class="summary"><strong>${E(report.title)}</strong><p>Source: ${E(report.source)} · ${E(report.createdAt)}</p>${report.explanations.map(x => `<p>${E(x)}</p>`).join("")}</div>` +
+    `<h3 style="margin-top:15px">Explain your result</h3><form>${report.questions.map((q, i) => `<fieldset><legend>${i+1}. ${E(q.prompt)}</legend>` +
+      (q.type === "choice" ? q.options.map((opt, j) => `<label><input type="radio" name="${E(q.id)}" data-question="${E(q.id)}" value="${j}"> ${E(opt)}</label>`).join("") :
+      `<textarea data-question="${E(q.id)}" aria-label="Answer to question ${i+1}" placeholder="Write your reasoning here"></textarea>`) +
+      `<p class="feedback" data-feedback="${E(q.id)}"></p></fieldset>`).join("")}</form>` +
+    `<div class="row"><button class="b p" type="button" data-action="check">Check answers</button><button class="b" type="button" data-action="json">Download report JSON</button><button class="b" type="button" data-action="html">Download printable report</button></div>`;
+  function collect() {
+    report.answers = GTReport.check(report, reportValues(box));
+    return report.answers;
+  }
+  box.querySelector('[data-action="check"]').onclick = () => {
+    for (const a of collect()) {
+      const el = box.querySelector(`[data-feedback="${a.id}"]`);
+      el.textContent = (a.correct === null ? "" : a.correct ? "Correct. " : "Review this answer. ") + a.feedback;
+      el.className = "feedback " + (a.correct === null ? "" : a.correct ? "good" : "bad");
+    }
+  };
+  const pre = new URLSearchParams(location.hash.slice(1)).get("ans");
+  if (pre) { pre.split("|").forEach((v, i) => { const q = report.questions[i]; if (!q || v === "") return;
+      if (q.type === "choice") { const r = box.querySelector(`input[name="${q.id}"][value="${+v}"]`); if (r) r.checked = true; }
+      else box.querySelector(`textarea[data-question="${q.id}"]`).value = v; });
+    box.querySelector('[data-action="check"]').onclick(); }
+  box.querySelector('[data-action="json"]').onclick = () => { collect(); saveReport(report, "json"); };
+  box.querySelector('[data-action="html"]').onclick = () => { collect(); saveReport(report, "html"); };
+}
+function renderReplayReport() {
+  const R = D.reps[s4.run];
+  const report = GTReport.build({title:`Measured tuning replay · run ${s4.run+1}`, source:"measured replay", mode:"replay",
+    context:{session:R.session, setpoint:R.sp || 15, ZNReferenceMean:ZNMEAN[R.session], confirmedGains:R.conf.k},
+    trials:R.trials, confirmation:R.conf, evidence:{confirmationTrajectory:{distance:R.conf.y,output:R.conf.u}, trialCosts:R.trials.map(t => ({generation:t.g,ITAE:t.J,interrupted:!!t.x}))}});
+  mountReport($("r4Report"), report);
+  focusReport("r4Report");
+}
+function renderLiveReport() {
+  const kind = LV.kind;
+  if (!kind) return;
+  if (kind === "tune" && !LV.trials.length) { $("lvReport").hidden = true; return; }
+  if (kind === "auto" && !LV.ops.length) { $("lvReport").hidden = true; return; }
+  const ctx = LV.config || {gains:[$("lvKp"),$("lvKi"),$("lvKd")].map(x => +x.value),
+    setpoint:+$("lvSp").value, population:+$("lvNp").value, generations:+$("lvG").value};
+  let reference = null;
+  if (kind === "run" && Math.abs(ctx.setpoint - 15) < 0.01) {
+    const currentZN = ctx.gains.every((v, j) => Math.abs(v - ZN[j]) < 0.02);
+    if (!currentZN && Number.isFinite(LV.znJ)) reference = {J:LV.znJ,label:"same-session ZN trial", note:"This is one same-session baseline, not an estimate of expected performance."};
+    else reference = {J:ZNMEAN.A,label:"session-A ZN mean from the reference data set", note:"This is a different session and is provided for context; record a baseline on your own rig for a direct comparison."};
+  }
+  const report = GTReport.build({title:`${{run:"PID step trial",relay:"Relay experiment",tune:"On-chip GA tuning",auto:"Supervised retuning"}[kind]} · ${LV.reportSource || (LV.demo ? "emulator" : "rig")}`,
+    source:LV.reportSource || (LV.demo ? "emulator" : "rig"), mode:kind, context:ctx,
+    metrics:kind === "run" ? LV.runMetrics : LV.relayMetrics, reference, trials:LV.trials, confirmation:LV.conf,
+    episodes:LV.ops, trigger:LV.trig, evidence:{episodeRows:(LV.epRows[LV.ep] || []).map(r => [r.t,r.sp,r.y,r.u,r.e]), events:LV.events}});
+  mountReport($("lvReport"), report);
+  focusReport("lvReport");
+}
+function focusReport(id) { if (new URLSearchParams(location.hash.slice(1)).get("view") === "report") { document.body.classList.add("reportonly"); $(id).classList.add("focus"); } }
+
+/* ---------- init (supports #stage=N for screenshots) ---------- */
+setK2(ZN); $("q1p").value = "";
+const hs = new URLSearchParams(location.hash.slice(1));
+const hp = k => hs.get(k);
+if (hp("d")) $("d1").value = hp("d"); if (hp("a")) $("a1").value = hp("a"); if (hp("pu")) $("pu1").value = hp("pu");
+if (hp("kp")) setK2([+hp("kp"), +(hp("ki") || 0), +(hp("kd") || 0)]);
+if (hp("np")) $("n3").value = hp("np"); if (hp("g")) $("g3").value = hp("g");
+if (hp("ex")) s5 = +hp("ex") - 1; if (hp("gamma")) { $("g5").value = hp("gamma"); s5n = 99; }
+if (hp("lkp")) $("lvKp").value = hp("lkp"); if (hp("lki")) $("lvKi").value = hp("lki"); if (hp("lkd")) $("lvKd").value = hp("lkd"); if (hp("lsp")) $("lvSp").value = hp("lsp"); if (hp("lnp")) $("lvNp").value = hp("lnp"); if (hp("lg")) $("lvG").value = hp("lg");
+if (hs.get("run")) s4.run = +hs.get("run") - 1; if (hs.get("trial")) s4.tr = +hs.get("trial"); if (hs.get("step")) s3.step = +hs.get("step");
+go(hs.get("stage") === null ? 0 : Math.max(0, Math.min(6, +hs.get("stage"))));
+if (hs.get("livelog")) { const sc = document.createElement("script"); sc.src = "logs/" + hs.get("livelog") + ".js"; sc.onload = () => lvLoadLog(GT_LOG.name, GT_LOG.rows, GT_LOG.events); document.body.appendChild(sc); }
+if (hs.get("demo")) lvDemo().then(() => { if (hs.get("exp")) { $("lvType").value = hs.get("exp"); lvGo().then(() => { if (hs.get("replay")) lvToReplay(); }); } });
+</script>
+</body>
+</html>

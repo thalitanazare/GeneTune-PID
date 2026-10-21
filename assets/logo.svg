@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="GeneTune logo">
+  <rect x="1" y="1" width="62" height="62" rx="14" fill="#ffffff" stroke="#cfd5de" stroke-width="2"/>
+  <!-- double helix (Gene) -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M10 9 C 27 17, 27 25, 10 32 S 27 48, 10 55" stroke="#1c5591" stroke-width="3.6"/>
+    <path d="M27 9 C 10 17, 10 25, 27 32 S 10 48, 27 55" stroke="#1c5591" stroke-width="3.6" opacity=".45"/>
+    <path d="M13.5 14.5h10M13.5 49.5h10M14.5 25h8M14.5 39h8" stroke="#1c5591" stroke-width="2.2" opacity=".8"/>
+  </g>
+  <!-- step response with overshoot (Tune) -->
+  <path d="M30 27 H58" stroke="#c25a12" stroke-width="1.8" stroke-dasharray="3 3" opacity=".55"/>
+  <path d="M30 50 H35 C 39 50, 39 14, 45 16 S 50 30, 53 27.5 S 56 26.5, 58 27" fill="none" stroke="#c25a12" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
